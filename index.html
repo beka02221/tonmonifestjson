@@ -4,60 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TON Connect</title>
-    <script src="https://unpkg.com/@tonconnect/sdk@latest/dist/tonconnect-sdk.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background: #121212;
-            color: #fff;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 18px;
-            color: #fff;
-            background: #007aff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        button:hover {
-            background: #005bb5;
-        }
-    </style>
 </head>
 <body>
-    <button id="connectButton">Подключить кошелёк</button>
-
-    <script>
-        // Инициализация TonConnect
-        const tonConnect = new TonConnect({
-            manifestUrl: 'https://beka02221.github.io/tonmonifestjson/tonconnect-manifest.json' // Замените на ссылку на ваш манифест
-        });
-
-        const connectButton = document.getElementById('connectButton');
-
-        connectButton.addEventListener('click', async () => {
-            try {
-                // Запуск процесса подключения
-                await tonConnect.connect();
-
-                // Если успешно подключено
-                alert('Кошелёк успешно подключен!');
-
-                // Получение информации о пользователе
-                const walletInfo = tonConnect.wallet;
-                console.log('Подключённый кошелёк:', walletInfo);
-            } catch (error) {
-                console.error('Ошибка подключения:', error);
-                alert('Ошибка при подключении кошелька. Попробуйте снова.');
-            }
-        });
-    </script>
+    <button id="connectWallet">Подключить кошелёк</button>
+    <script src="index.js"></script>
 </body>
 </html>

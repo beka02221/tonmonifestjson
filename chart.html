@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <title>Real Chart — TON/SOL (MEXC)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root { --bg:#0b0f14; --panel:#121821; --grid:#243044; --text:#dfe7f3; --muted:#8aa0bf; }
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,Segoe UI,Roboto,Arial,sans-serif}
+    .wrap{max-width:1200px;margin:0 auto;padding:16px}
+    .head{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+    .badge{padding:4px 8px;border-radius:8px;background:var(--panel);color:var(--muted)}
+    .grid{display:grid;grid-template-columns:1fr;gap:16px}
+    @media (min-width: 1000px){ .grid{grid-template-columns:1fr 1fr} }
+    .card{background:var(--panel);border-radius:14px;padding:12px;box-shadow:0 2px 10px rgba(0,0,0,.35)}
+    .title{margin:0 0 8px;font-weight:700}
+    .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .pill{background:#0f263d;border:1px solid #17324d;padding:4px 8px;border-radius:999px;color:#cfe2ff}
+    .muted{color:var(--muted)}
+    .chart{height:320px}
+    .foot{margin-top:14px;color:var(--muted);font-size:12px}
+    a { color:#8fb8ff; text-decoration:none }
+  </style>
+  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head">
+      <h2 style="margin:0">Real Chart — TON/SOL (MEXC)</h2>
+      <span class="badge">Источник: MEXC REST</span>
+      <span class="badge">Интервал: 1m</span>
+      <span class="badge">Обновление: ~1s</span>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h3 class="title">TON/USDT</h3>
+        <div id="tonChart" class="chart"></div>
+        <div class="row"><span class="pill" id="tonNow">—</span><span class="muted" id="tonTime">—</span></div>
+      </div>
+      <div class="card">
+        <h3 class="title">SOL/USDT</h3>
+        <div id="solChart" class="chart"></div>
+        <div class="row"><span class="pill" id="solNow">—</span><span class="muted" id="solTime">—</span></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h3 class="title">INDEX = TON.mid / SOL.mid × 100</h3>
+      <div id="idxChart" class="chart"></div>
+      <div class="row"><span class="pill" id="idxNow">—</span><span class="muted" id="idxTime">—</span></div>
+      <div class="foot">*mid берём как (bid+ask)/2 с <code>/api/v3/ticker/bookTicker</code>; история собирается из свингов close 1m с <code>/api/v3/klines</code>.</div>
+    </div>
+
+    <div class="foot">© MEXC data • Lightweight Charts • Сделано для оперативного мониторинга</div>
+  </div>
+
+<script>
+const API = "https://api.mexc.com/api/v3";
+const TON = "TONUSDT";
+const SOL = "SOLUSDT";
+const LIMIT = 500;   // исторических свечей
+
+function qs(id){return document.getElementById(id)}
+function fmt(n, p=6){return (n==null?"—":(+n).toFixed(p).replace(/\.?0+$/,""))}
+function tsFmt(t){const d=new Date(t*1000); return d.toISOString().replace('T',' ').slice(0,19)+' UTC'}
+
+function createChart(containerId){
+  const chart = LightweightCharts.createChart(qs(containerId), {
+    layout:{ background:{type:'solid', color:'#121821'}, textColor:'#dfe7f3' },
+    grid:{ vertLines:{color:'#243044'}, horzLines:{color:'#243044'} },
+    timeScale:{ timeVisible:true, secondsVisible:false, rightOffset:2, borderColor:'#243044' },
+    rightPriceScale:{ borderColor:'#243044' },
+    crosshair:{ mode:LightweightCharts.CrosshairMode.Normal },
+  });
+  const series = chart.addLineSeries({ lineWidth:2 });
+  return {chart, series};
+}
+
+const ton = createChart('tonChart');
+const sol = createChart('solChart');
+const idx = createChart('idxChart');
+
+async function klines(symbol){
+  const url = `${API}/klines?symbol=${symbol}&interval=1m&limit=${LIMIT}`;
+  const r = await fetch(url); if(!r.ok) throw new Error('klines '+symbol);
+  const j = await r.json();
+  // kline: [openTime, open, high, low, close, volume, closeTime, ...]
+  return j.map(a=>({ time: Math.floor(a[0]/1000), value: +a[4] }));
+}
+
+async function bookTicker(symbol){
+  const r = await fetch(`${API}/ticker/bookTicker?symbol=${symbol}`);
+  if(!r.ok) throw new Error('bookTicker '+symbol);
+  const j = await r.json();
+  const bid = +j.bidPrice, ask = +j.askPrice;
+  return { bid, ask, mid: (bid+ask)/2 };
+}
+
+let lastTonTime=0,lastSolTime=0,lastIdxTime=0;
+
+async function loadHistory(){
+  const [tHist,sHist] = await Promise.all([klines(TON), klines(SOL)]);
+  ton.series.setData(tHist);
+  sol.series.setData(sHist);
+  // индекс из close
+  const map = new Map(sHist.map(p=>[p.time,p.value]));
+  const idxHist = tHist.filter(p=>map.has(p.time)).map(p=>({time:p.time, value: (p.value/map.get(p.time))*100}));
+  idx.series.setData(idxHist);
+  if(idxHist.length){
+    lastIdxTime = idxHist[idxHist.length-1].time;
+    qs('idxNow').textContent = fmt(idxHist[idxHist.length-1].value, 4);
+    qs('idxTime').textContent = tsFmt(lastIdxTime);
+  }
+  if(tHist.length){
+    lastTonTime = tHist[tHist.length-1].time;
+    qs('tonNow').textContent = fmt(tHist[tHist.length-1].value, 6);
+    qs('tonTime').textContent = tsFmt(lastTonTime);
+  }
+  if(sHist.length){
+    lastSolTime = sHist[sHist.length-1].time;
+    qs('solNow').textContent = fmt(sHist[sHist.length-1].value, 6);
+    qs('solTime').textContent = tsFmt(lastSolTime);
+  }
+}
+
+async function liveTick(){
+  try{
+    const [t,s] = await Promise.all([bookTicker(TON), bookTicker(SOL)]);
+    const now = Math.floor(Date.now()/1000);
+    // апдейтим «текущую» точку на правом краю (живой хвост)
+    ton.series.update({time: now, value: t.mid});
+    sol.series.update({time: now, value: s.mid});
+    const iv = (t.mid/s.mid)*100;
+    idx.series.update({time: now, value: iv});
+
+    qs('tonNow').textContent = fmt(t.mid, 6);
+    qs('solNow').textContent = fmt(s.mid, 6);
+    qs('idxNow').textContent = fmt(iv, 4);
+    qs('tonTime').textContent = tsFmt(now);
+    qs('solTime').textContent = tsFmt(now);
+    qs('idxTime').textContent = tsFmt(now);
+  }catch(e){
+    // молча пропускаем одну ошибку
+  }
+}
+
+// старт
+loadHistory().then(()=>{
+  setInterval(liveTick, 1000);
+});
+</script>
+</body>
+</html>

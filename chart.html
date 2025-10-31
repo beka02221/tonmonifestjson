@@ -1,154 +1,366 @@
 <!doctype html>
-<html lang="ru">
+<html lang="ru" data-theme="dark">
 <head>
   <meta charset="utf-8" />
-  <title>Real Chart — TON/SOL (MEXC)</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TON/SOL — Real Charts (MEXC)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0f14" />
   <style>
-    :root { --bg:#0b0f14; --panel:#121821; --grid:#243044; --text:#dfe7f3; --muted:#8aa0bf; }
-    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,Segoe UI,Roboto,Arial,sans-serif}
-    .wrap{max-width:1200px;margin:0 auto;padding:16px}
-    .head{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
-    .badge{padding:4px 8px;border-radius:8px;background:var(--panel);color:var(--muted)}
-    .grid{display:grid;grid-template-columns:1fr;gap:16px}
-    @media (min-width: 1000px){ .grid{grid-template-columns:1fr 1fr} }
-    .card{background:var(--panel);border-radius:14px;padding:12px;box-shadow:0 2px 10px rgba(0,0,0,.35)}
-    .title{margin:0 0 8px;font-weight:700}
-    .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-    .pill{background:#0f263d;border:1px solid #17324d;padding:4px 8px;border-radius:999px;color:#cfe2ff}
-    .muted{color:var(--muted)}
-    .chart{height:320px}
-    .foot{margin-top:14px;color:var(--muted);font-size:12px}
-    a { color:#8fb8ff; text-decoration:none }
+    :root{
+      /* ТЁМНАЯ ТЕМА (по умолчанию) */
+      --bg:#090c12; --panel:#0f1520; --panel-2:#0b101a;
+      --grid:#24324a; --text:#e8f0ff; --muted:#9fb3d2; --brand:#8fb8ff;
+      --accent:#35e1ad; --accent-2:#8a5cf6; /* неоновые акценты */
+      --radius:16px; --shadow:0 8px 30px rgba(0,0,0,.45);
+      --chip-bg:#0e2742; --chip-br:#1b3a60; --chip-active:#143a66;
+      --pill-bg:#0d2239; --pill-br:#163052;
+      --btn-bg:#0f2a47; --btn-br:#214f82; --btn-bg-2:#182e4d;
+      --glow:0 0 18px rgba(53,225,173,.45), 0 0 34px rgba(138,92,246,.35);
+      --chart-bg:#121a28;
+      --ok:#69e4a9; --err:#ff8b8b; --warn:#ffd27a;
+    }
+    /* СВЕТЛАЯ ТЕМА */
+    html[data-theme="light"]{
+      --bg:#f8fbff; --panel:#ffffff; --panel-2:#f3f6fb;
+      --grid:#dfe7f4; --text:#0e1a2b; --muted:#6b7b95; --brand:#3a68d8;
+      --accent:#0ea5e9; --accent-2:#8b5cf6;
+      --radius:16px; --shadow:0 8px 24px rgba(0,0,0,.08);
+      --chip-bg:#eef4ff; --chip-br:#d7e2fb; --chip-active:#d6e6ff;
+      --pill-bg:#eef4ff; --pill-br:#d7e2fb;
+      --btn-bg:#eef4ff; --btn-br:#d7e2fb; --btn-bg-2:#e9f1ff;
+      --glow:0 0 16px rgba(14,165,233,.35),0 0 28px rgba(139,92,246,.28);
+      --chart-bg:#fff;
+      --ok:#059669; --err:#dc2626; --warn:#d97706;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font:14px/1.5 Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+
+    .wrap{max-width:1200px;margin:0 auto;padding:14px}
+    .hdr{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:6px 0 12px}
+    .title{margin:0;font-weight:800;letter-spacing:.2px;display:flex;align-items:center;gap:10px}
+    .neon-dot{width:10px;height:10px;border-radius:999px;background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:var(--glow)}
+    .badges{display:flex;gap:10px;flex-wrap:wrap}
+    .badge{padding:6px 10px;border-radius:999px;background:var(--panel);color:var(--muted);border:1px solid var(--chip-br)}
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .chip{background:var(--chip-bg);border:1px solid var(--chip-br);color:var(--text);padding:7px 12px;border-radius:12px;cursor:pointer;user-select:none}
+    .chip.active{background:var(--chip-active);box-shadow:var(--glow)}
+    .btn{padding:9px 14px;border-radius:12px;background:linear-gradient(180deg,var(--btn-bg),var(--btn-bg-2));border:1px solid var(--btn-br);color:var(--text);cursor:pointer}
+    .btn:active{transform:translateY(1px)}
+    .toggle{display:flex;align-items:center;gap:8px}
+    .toggle input{appearance:none;width:44px;height:24px;border-radius:999px;background:var(--chip-bg);border:1px solid var(--chip-br);position:relative;cursor:pointer;outline:none}
+    .toggle input:checked{background:linear-gradient(90deg,var(--accent),var(--accent-2));box-shadow:var(--glow)}
+    .toggle input::after{content:"";position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;left:3px;top:2.5px;transition:transform .2s}
+    .toggle input:checked::after{transform:translateX(20px)}
+
+    .grid{display:grid;gap:14px;grid-template-columns:1fr}
+    @media (min-width:1000px){ .grid{grid-template-columns:1fr 1fr} }
+
+    .card{background:linear-gradient(180deg,var(--panel),var(--panel-2));border-radius:var(--radius);padding:12px;border:1px solid var(--chip-br);box-shadow:var(--shadow)}
+    .card h3{margin:0 0 10px;font-size:15px;display:flex;align-items:center;gap:10px}
+    .card h3 .spark{width:8px;height:8px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:var(--glow)}
+    .subbar{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0 10px;align-items:center}
+    .pill{padding:7px 11px;border-radius:999px;background:var(--pill-bg);border:1px solid var(--pill-br);color:var(--text)}
+    .muted{color:var(--muted);font-size:12px}
+
+    .chart{height:44vh; min-height:260px; border-radius:12px; overflow:hidden; background:var(--chart-bg)}
+    @media (min-width:1000px){ .chart{height:36vh} }
+
+    .footer{margin-top:14px;color:var(--muted);font-size:12px}
+
+    /* skeleton */
+    .skeleton{position:relative;border:1px dashed var(--grid);border-radius:12px;height:44vh;min-height:260px;overflow:hidden}
+    @media (min-width:1000px){ .skeleton{height:36vh} }
+    .skeleton::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent);transform:translateX(-100%);animation:sh 1.4s infinite}
+    @keyframes sh{to{transform:translateX(100%)}}
+
+    /* toast */
+    .toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%) translateY(12px);background:var(--panel);color:var(--text);border:1px solid var(--chip-br);padding:10px 14px;border-radius:12px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .18s, transform .18s;z-index:50;font-size:13px}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+    /* скрытие карточек (переключатели) */
+    .hidden{display:none !important}
   </style>
-  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+
+  <!-- стабильная версия графиков -->
+  <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js" defer></script>
 </head>
 <body>
   <div class="wrap">
-    <div class="head">
-      <h2 style="margin:0">Real Chart — TON/SOL (MEXC)</h2>
-      <span class="badge">Источник: MEXC REST</span>
-      <span class="badge">Интервал: 1m</span>
-      <span class="badge">Обновление: ~1s</span>
+    <!-- Header -->
+    <div class="hdr">
+      <h2 class="title"><span class="neon-dot"></span>TON/SOL — Real Charts (MEXC)</h2>
+      <div class="toolbar">
+        <!-- Тема -->
+        <label class="toggle" title="Светлая/Тёмная тема">
+          <input id="themeSwitch" type="checkbox" />
+          <span class="muted">Тема</span>
+        </label>
+        <!-- Автообновление -->
+        <label class="toggle" title="Автообновление графиков">
+          <input id="liveSwitch" type="checkbox" checked />
+          <span class="muted">Live</span>
+        </label>
+        <button class="btn" id="btnRefresh" title="Обновить сейчас">↻ Refresh</button>
+      </div>
     </div>
 
+    <!-- Sub header -->
+    <div class="hdr" style="margin-top:-6px">
+      <div class="badges">
+        <span class="badge" id="status">Статус: загрузка…</span>
+        <span class="badge">Интервал: <span id="tfLabel">1m</span></span>
+        <span class="badge"><a href="https://api.mexc.com" target="_blank" rel="noreferrer" style="text-decoration:none;color:var(--brand)">MEXC API</a></span>
+      </div>
+      <div class="toolbar" aria-label="Таймфрейм">
+        <div class="chip active" data-int="1m">1m</div>
+        <div class="chip" data-int="5m">5m</div>
+        <div class="chip" data-int="15m">15m</div>
+      </div>
+    </div>
+
+    <!-- Переключатели видимости -->
+    <div class="toolbar" style="margin:0 0 10px">
+      <label class="toggle"><input id="toggleTon" type="checkbox" checked /><span class="muted">TON</span></label>
+      <label class="toggle"><input id="toggleSol" type="checkbox" checked /><span class="muted">SOL</span></label>
+      <label class="toggle"><input id="toggleIdx" type="checkbox" checked /><span class="muted">INDEX</span></label>
+    </div>
+
+    <!-- ГРИД -->
     <div class="grid">
-      <div class="card">
-        <h3 class="title">TON/USDT</h3>
+      <div id="cardTon" class="card">
+        <h3><span class="spark"></span>TON/USDT</h3>
+        <div class="subbar"><span class="pill" id="tonNow">—</span><span class="muted" id="tonTime">—</span></div>
         <div id="tonChart" class="chart"></div>
-        <div class="row"><span class="pill" id="tonNow">—</span><span class="muted" id="tonTime">—</span></div>
+        <div id="tonSkel" class="skeleton"></div>
       </div>
-      <div class="card">
-        <h3 class="title">SOL/USDT</h3>
+
+      <div id="cardSol" class="card">
+        <h3><span class="spark"></span>SOL/USDT</h3>
+        <div class="subbar"><span class="pill" id="solNow">—</span><span class="muted" id="solTime">—</span></div>
         <div id="solChart" class="chart"></div>
-        <div class="row"><span class="pill" id="solNow">—</span><span class="muted" id="solTime">—</span></div>
+        <div id="solSkel" class="skeleton"></div>
       </div>
     </div>
 
-    <div class="card" style="margin-top:16px">
-      <h3 class="title">INDEX = TON.mid / SOL.mid × 100</h3>
+    <div id="cardIdx" class="card" style="margin-top:14px">
+      <h3><span class="spark"></span>INDEX = TON.mid / SOL.mid × 100</h3>
+      <div class="subbar"><span class="pill" id="idxNow">—</span><span class="muted" id="idxTime">—</span></div>
       <div id="idxChart" class="chart"></div>
-      <div class="row"><span class="pill" id="idxNow">—</span><span class="muted" id="idxTime">—</span></div>
-      <div class="foot">*mid берём как (bid+ask)/2 с <code>/api/v3/ticker/bookTicker</code>; история собирается из свингов close 1m с <code>/api/v3/klines</code>.</div>
+      <div id="idxSkel" class="skeleton"></div>
+      <div class="footer">mid = (bid+ask)/2 • история close из <code>/klines</code> • данные через публичные CORS-прокси</div>
     </div>
 
-    <div class="foot">© MEXC data • Lightweight Charts • Сделано для оперативного мониторинга</div>
+    <div class="footer">© Lightweight Charts • Адаптивный UI • Тема: светлая/тёмная • Неон-акценты</div>
   </div>
 
+  <div id="toast" class="toast">Сообщение</div>
+
 <script>
-const API = "https://api.mexc.com/api/v3";
-const TON = "TONUSDT";
-const SOL = "SOLUSDT";
-const LIMIT = 500;   // исторических свечей
-
-function qs(id){return document.getElementById(id)}
-function fmt(n, p=6){return (n==null?"—":(+n).toFixed(p).replace(/\.?0+$/,""))}
-function tsFmt(t){const d=new Date(t*1000); return d.toISOString().replace('T',' ').slice(0,19)+' UTC'}
-
-function createChart(containerId){
-  const chart = LightweightCharts.createChart(qs(containerId), {
-    layout:{ background:{type:'solid', color:'#121821'}, textColor:'#dfe7f3' },
-    grid:{ vertLines:{color:'#243044'}, horzLines:{color:'#243044'} },
-    timeScale:{ timeVisible:true, secondsVisible:false, rightOffset:2, borderColor:'#243044' },
-    rightPriceScale:{ borderColor:'#243044' },
-    crosshair:{ mode:LightweightCharts.CrosshairMode.Normal },
+  // ====== БАЗА ======
+  window.addEventListener('DOMContentLoaded', () => {
+    if (!window.LightweightCharts || typeof LightweightCharts.createChart !== 'function') {
+      toast('Charts не загрузились. Проверь CDN.'); setStatus('ошибка библиотеки', false); return;
+    }
+    setupTheme(); initApp();
   });
-  const series = chart.addLineSeries({ lineWidth:2 });
-  return {chart, series};
-}
 
-const ton = createChart('tonChart');
-const sol = createChart('solChart');
-const idx = createChart('idxChart');
+  // Публичные прокси — без сервера. Код сам делает ретраи и фолбэки.
+  const API_BASE = "https://api.mexc.com/api/v3";
+  const PROXIES = [
+    (u) => `https://cors.isomorphic-git.org/${u}`,
+    (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+    // текстовый CDN (иногда быстрее). Вернёт JSON-текст — парсим.
+    (u) => `https://r.jina.ai/http/${u.replace(/^https?:\/\//,'')}`
+  ];
 
-async function klines(symbol){
-  const url = `${API}/klines?symbol=${symbol}&interval=1m&limit=${LIMIT}`;
-  const r = await fetch(url); if(!r.ok) throw new Error('klines '+symbol);
-  const j = await r.json();
-  // kline: [openTime, open, high, low, close, volume, closeTime, ...]
-  return j.map(a=>({ time: Math.floor(a[0]/1000), value: +a[4] }));
-}
+  const TON = "TONUSDT"; const SOL = "SOLUSDT";
+  const LIMIT = 500;
+  let INTERVAL = "1m";
+  let liveTimer = null;
+  let charts = {}; // {ton:{chart,series}, sol:{...}, idx:{...}}
 
-async function bookTicker(symbol){
-  const r = await fetch(`${API}/ticker/bookTicker?symbol=${symbol}`);
-  if(!r.ok) throw new Error('bookTicker '+symbol);
-  const j = await r.json();
-  const bid = +j.bidPrice, ask = +j.askPrice;
-  return { bid, ask, mid: (bid+ask)/2 };
-}
+  const $ = (id) => document.getElementById(id);
+  const qsa = (sel, root=document)=>[...root.querySelectorAll(sel)];
 
-let lastTonTime=0,lastSolTime=0,lastIdxTime=0;
+  function fmt(n,p=6){return (n==null?"—":(+n).toFixed(p).replace(/\.?0+$/,""))}
+  function tsFmtSec(s){const d=new Date(s*1000); return d.toISOString().replace('T',' ').slice(0,19)+' UTC'}
+  function setStatus(text, ok=true){ const el=$("status"); el.textContent="Статус: "+text; el.style.color= ok ? "var(--ok)" : "var(--err)"; }
+  function toast(msg, ms=2000){ const el=$("toast"); el.textContent=msg; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'), ms); }
+  function hideSkeleton(id){ const el=$(id); if(el) el.style.display="none"; }
+  function showSkeleton(id){ const el=$(id); if(el) el.style.display="block"; }
 
-async function loadHistory(){
-  const [tHist,sHist] = await Promise.all([klines(TON), klines(SOL)]);
-  ton.series.setData(tHist);
-  sol.series.setData(sHist);
-  // индекс из close
-  const map = new Map(sHist.map(p=>[p.time,p.value]));
-  const idxHist = tHist.filter(p=>map.has(p.time)).map(p=>({time:p.time, value: (p.value/map.get(p.time))*100}));
-  idx.series.setData(idxHist);
-  if(idxHist.length){
-    lastIdxTime = idxHist[idxHist.length-1].time;
-    qs('idxNow').textContent = fmt(idxHist[idxHist.length-1].value, 4);
-    qs('idxTime').textContent = tsFmt(lastIdxTime);
+  // ====== ТЕМА ======
+  function setupTheme(){
+    // авто по системе
+    const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+    const saved = localStorage.getItem('theme');
+    const initial = saved || (prefersLight ? 'light' : 'dark');
+    document.documentElement.setAttribute('data-theme', initial);
+    $("themeSwitch").checked = initial === 'light';
+    // переключатель
+    $("themeSwitch").addEventListener('change', ()=>{
+      const mode = $("themeSwitch").checked ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', mode);
+      localStorage.setItem('theme', mode);
+      // лекап: перерисуем ось времени/цвета
+      if (charts.ton) charts.ton.chart.applyOptions(themeChartOpts());
+      if (charts.sol) charts.sol.chart.applyOptions(themeChartOpts());
+      if (charts.idx) charts.idx.chart.applyOptions(themeChartOpts());
+    });
   }
-  if(tHist.length){
-    lastTonTime = tHist[tHist.length-1].time;
-    qs('tonNow').textContent = fmt(tHist[tHist.length-1].value, 6);
-    qs('tonTime').textContent = tsFmt(lastTonTime);
-  }
-  if(sHist.length){
-    lastSolTime = sHist[sHist.length-1].time;
-    qs('solNow').textContent = fmt(sHist[sHist.length-1].value, 6);
-    qs('solTime').textContent = tsFmt(lastSolTime);
-  }
-}
 
-async function liveTick(){
-  try{
-    const [t,s] = await Promise.all([bookTicker(TON), bookTicker(SOL)]);
-    const now = Math.floor(Date.now()/1000);
-    // апдейтим «текущую» точку на правом краю (живой хвост)
-    ton.series.update({time: now, value: t.mid});
-    sol.series.update({time: now, value: s.mid});
-    const iv = (t.mid/s.mid)*100;
-    idx.series.update({time: now, value: iv});
-
-    qs('tonNow').textContent = fmt(t.mid, 6);
-    qs('solNow').textContent = fmt(s.mid, 6);
-    qs('idxNow').textContent = fmt(iv, 4);
-    qs('tonTime').textContent = tsFmt(now);
-    qs('solTime').textContent = tsFmt(now);
-    qs('idxTime').textContent = tsFmt(now);
-  }catch(e){
-    // молча пропускаем одну ошибку
+  function themeChartOpts(){
+    // обновляем цвета сетки/текста при смене темы
+    return {
+      layout:{ background:{type:'solid', color:getVar('--chart-bg')}, textColor:getVar('--text') },
+      rightPriceScale:{ borderColor:getVar('--grid') },
+      timeScale:{ borderColor:getVar('--grid') },
+      grid:{ vertLines:{color:getVar('--grid')}, horzLines:{color:getVar('--grid')} },
+    };
   }
-}
+  function getVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim() }
 
-// старт
-loadHistory().then(()=>{
-  setInterval(liveTick, 1000);
-});
+  // ====== СЕТЕВЫЕ ВСПОМОГАТЕЛЬНЫЕ ======
+  function apiUrl(q){ return `${API_BASE}/${q}` }
+  async function viaProxies(url, tries=3){
+    let lastErr;
+    for(let round=0; round<tries; round++){
+      for(const build of PROXIES){
+        const proxied = build(url);
+        try{
+          const r = await fetch(proxied, { cache:'no-store' });
+          if(!r.ok) throw new Error(`HTTP ${r.status}`);
+          const text = await r.text();
+          let data; try { data = JSON.parse(text); } catch { data = JSON.parse(text.replace(/^[^{\[]+/,'')); }
+          return data;
+        }catch(e){ lastErr=e; await new Promise(res=>setTimeout(res, 250*(round+1))); }
+      }
+    }
+    throw lastErr || new Error('All proxies failed');
+  }
+  async function mexcJSON(pathWithQuery){
+    return viaProxies(apiUrl(pathWithQuery), 3);
+  }
+
+  // ====== ЧАРТЫ ======
+  function makeChart(containerEl){
+    const width = containerEl.clientWidth || 600;
+    const height = containerEl.clientHeight || 300;
+    const chart = LightweightCharts.createChart(containerEl, {
+      width, height,
+      layout:{ background:{type:'solid', color:getVar('--chart-bg')}, textColor:getVar('--text') },
+      rightPriceScale:{ borderColor:getVar('--grid') },
+      timeScale:{ borderColor:getVar('--grid'), timeVisible:true, secondsVisible:false, rightOffset:6, barSpacing:8 },
+      grid:{ vertLines:{color:getVar('--grid')}, horzLines:{color:getVar('--grid')} },
+      crosshair:{ mode:LightweightCharts.CrosshairMode.Magnet },
+      handleScale:{ mouseWheel:true, pinch:true, axisPressedMouseMove:true },
+      kineticScroll:{ mouse:true, touch:true },
+    });
+    const series = chart.addLineSeries({ lineWidth:2 });
+    const ro = new ResizeObserver(() => chart.resize(containerEl.clientWidth||600, containerEl.clientHeight||300));
+    ro.observe(containerEl);
+    return { chart, series };
+  }
+
+  async function klines(symbol){
+    const j = await mexcJSON(`klines?symbol=${symbol}&interval=${INTERVAL}&limit=${LIMIT}`);
+    return j.map(a => ({ time: Math.floor(a[0]/1000), value: +a[4] }));
+  }
+
+  async function bookMid(symbol){
+    const j = await mexcJSON(`ticker/bookTicker?symbol=${symbol}`);
+    const bid=+j.bidPrice, ask=+j.askPrice;
+    return (bid+ask)/2;
+  }
+
+  async function loadHistory(){
+    setStatus('загрузка…', true);
+    showSkeleton('tonSkel'); showSkeleton('solSkel'); showSkeleton('idxSkel');
+    const [tHist,sHist] = await Promise.all([klines(TON), klines(SOL)]);
+    charts.ton.series.setData(tHist);
+    charts.sol.series.setData(sHist);
+    const smap = new Map(sHist.map(p=>[p.time,p.value]));
+    const idxHist = tHist.filter(p=>smap.has(p.time)).map(p=>({time:p.time, value:(p.value/smap.get(p.time))*100}));
+    charts.idx.series.setData(idxHist);
+
+    charts.ton.chart.timeScale().fitContent();
+    charts.sol.chart.timeScale().fitContent();
+    charts.idx.chart.timeScale().fitContent();
+
+    if (tHist.length){ const last=tHist.at(-1); $("tonNow").textContent=fmt(last.value,6); $("tonTime").textContent=tsFmtSec(last.time); }
+    if (sHist.length){ const last=sHist.at(-1); $("solNow").textContent=fmt(last.value,6); $("solTime").textContent=tsFmtSec(last.time); }
+    if (idxHist.length){ const last=idxHist.at(-1); $("idxNow").textContent=fmt(last.value,4); $("idxTime").textContent=tsFmtSec(last.time); }
+    hideSkeleton('tonSkel'); hideSkeleton('solSkel'); hideSkeleton('idxSkel');
+    setStatus('онлайн', true);
+    toast('Графики подключены');
+  }
+
+  async function liveTickOnce(){
+    try{
+      const [tm, sm] = await Promise.all([bookMid(TON), bookMid(SOL)]);
+      const now = Math.floor(Date.now()/1000);
+      const iv = (tm/sm)*100;
+
+      charts.ton.series.update({time:now, value:tm});
+      charts.sol.series.update({time:now, value:sm});
+      charts.idx.series.update({time:now, value:iv});
+
+      $("tonNow").textContent=fmt(tm,6);
+      $("solNow").textContent=fmt(sm,6);
+      $("idxNow").textContent=fmt(iv,4);
+      $("tonTime").textContent=$("solTime").textContent=$("idxTime").textContent=tsFmtSec(now);
+      setStatus('онлайн', true);
+    }catch(e){ setStatus('прокси медлит…', false); }
+  }
+
+  function startLive(){
+    stopLive();
+    if ($("liveSwitch").checked){
+      liveTimer = setInterval(liveTickOnce, 1000);
+    }
+  }
+  function stopLive(){ if (liveTimer){ clearInterval(liveTimer); liveTimer=null; } }
+
+  // ====== INIT ======
+  async function initApp(){
+    // создаём графики
+    charts.ton = makeChart($("tonChart"));
+    charts.sol = makeChart($("solChart"));
+    charts.idx = makeChart($("idxChart"));
+
+    // обработчики UI
+    $("btnRefresh").addEventListener('click', async ()=>{
+      toast('Обновляю…'); await loadHistory(); await liveTickOnce();
+    });
+    $("liveSwitch").addEventListener('change', ()=> startLive());
+
+    qsa('.chip').forEach(ch=>{
+      ch.addEventListener('click', async ()=>{
+        qsa('.chip').forEach(c=>c.classList.remove('active'));
+        ch.classList.add('active');
+        INTERVAL = ch.dataset.int || '1m';
+        $("tfLabel").textContent = INTERVAL;
+        toast('Интервал: '+INTERVAL);
+        await loadHistory();
+      });
+    });
+
+    // видимость карточек
+    $("toggleTon").addEventListener('change', ()=> $("cardTon").classList.toggle('hidden', !$("toggleTon").checked));
+    $("toggleSol").addEventListener('change', ()=> $("cardSol").classList.toggle('hidden', !$("toggleSol").checked));
+    $("toggleIdx").addEventListener('change', ()=> $("cardIdx").classList.toggle('hidden', !$("toggleIdx").checked));
+
+    // первая загрузка
+    try{
+      await loadHistory();
+      startLive();
+    }catch(e){
+      console.error(e);
+      setStatus('ошибка инициализации (прокси)', false);
+      toast('Публичные прокси недоступны. Обнови страницу позже.');
+    }
+  }
 </script>
 </body>
 </html>

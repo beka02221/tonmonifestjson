@@ -1,0 +1,2665 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <title>TON Desktop — Index & Price Desk</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#02030a" />
+
+  <style>
+    :root{
+      --bg:#02030a;
+      --bg2:#04061a;
+      --panel:#070b16;
+      --panel-2:#050812;
+      --chart:#02040a;
+      --text:#edf4ff;
+      --muted:#9fb4d5;
+      --grid:#1b2940;
+      --primary:#8fbcff;
+      --accent:#39e0b2;
+      --accent2:#8a5cf6;
+      --br:#1c2943;
+      --shadow:0 26px 70px rgba(0,0,0,.95);
+      --r:12px;
+      --glow:0 0 18px rgba(57,224,178,.45),0 0 32px rgba(138,92,246,.5);
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{
+      height:100%;margin:0;
+      background:
+        radial-gradient(circle at top,#1d275a 0,#05081a 45%,#02030a 100%),
+        repeating-linear-gradient(135deg,rgba(80,100,160,.12) 0,rgba(80,100,160,.12) 1px,transparent 1px,transparent 10px);
+      color:var(--text);
+      font:13px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+      touch-action:manipulation;
+      overscroll-behavior:none;
+    }
+    body.no-anim *{
+      animation:none !important;
+      transition:none !important;
+    }
+    a{color:var(--primary);text-decoration:none}
+    .hidden{display:none !important;}
+
+    .desktop{
+      min-height:100%;
+      display:flex;
+      flex-direction:column;
+    }
+
+    /* Верхняя полоска */
+    .top-bar{
+      position:relative;
+      z-index:30;
+      height:32px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 10px;
+      background:linear-gradient(180deg,#1b407f,#0b1834);
+      border-bottom:1px solid #0a1020;
+      box-shadow:0 10px 30px rgba(0,0,0,.9);
+    }
+    .top-left{
+      display:flex;align-items:center;gap:8px;
+      font-size:12px;
+      font-weight:600;
+      color:#e8f0ff;
+    }
+    .top-dot{
+      width:10px;height:10px;border-radius:999px;
+      background:conic-gradient(from 220deg,var(--accent),var(--accent2),var(--accent));
+      box-shadow:0 0 10px rgba(57,224,178,.7);
+      animation:topdot 1.8s infinite;
+    }
+    @keyframes topdot{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
+    .top-sub{
+      font-size:11px;
+      color:rgba(200,220,255,.8);
+      opacity:.9;
+    }
+    .top-right{
+      display:flex;align-items:center;gap:10px;font-size:11px;color:rgba(220,235,255,.8);
+    }
+    .status-pill{
+      padding:3px 9px;border-radius:999px;
+      border:1px solid rgba(100,150,255,.7);
+      background:linear-gradient(180deg,rgba(6,16,35,.95),rgba(3,9,22,.98));
+      display:flex;align-items:center;gap:6px;
+    }
+    .status-led{
+      width:8px;height:8px;border-radius:999px;
+      background:radial-gradient(circle at 30% 30%,#86ffd2,#1dbf7c);
+      box-shadow:0 0 10px rgba(99,255,204,.9);
+    }
+    .status-led.warn{
+      background:radial-gradient(circle at 30% 30%,#ffd76b,#c28c1b);
+      box-shadow:0 0 10px rgba(255,230,120,.9);
+    }
+    .status-led.err{
+      background:radial-gradient(circle at 30% 30%,#ff8181,#ab2626);
+      box-shadow:0 0 10px rgba(255,130,130,.85);
+    }
+
+    /* Основная зона рабочего стола */
+    .desktop-area{
+      position:relative;
+      flex:1;
+      padding:10px 10px 46px;
+      background:
+        radial-gradient(circle at top left,rgba(143,188,255,.18),transparent 60%),
+        radial-gradient(circle at bottom right,rgba(57,224,178,.12),transparent 60%),
+        linear-gradient(180deg,#050816,#02030a);
+      overflow:hidden;
+    }
+    .desktop-area::before{
+      content:"";
+      position:absolute;inset:0;
+      background:
+        radial-gradient(circle at 20% 10%,rgba(0,190,255,.06),transparent 50%),
+        radial-gradient(circle at 80% 90%,rgba(0,240,190,.05),transparent 55%);
+      opacity:.6;
+      pointer-events:none;
+    }
+
+    .desktop-hint{
+      position:absolute;
+      right:8px;bottom:8px;
+      font-size:11px;color:var(--muted);
+      opacity:.8;
+      pointer-events:none;
+      max-width:260px;
+      text-align:right;
+      white-space:pre-line;
+    }
+
+    /* Док слева — ярлыки приложений и разделители */
+    .desktop-dock{
+      position:absolute;
+      left:8px;
+      top:42px;
+      display:flex;
+      flex-direction:column;
+      gap:5px;
+      z-index:6;
+    }
+    .dock-section-label{
+      font-size:10px;
+      color:rgba(180,200,240,.7);
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      margin:3px 4px;
+    }
+    .dock-separator{
+      height:1px;
+      margin:0 2px 4px;
+      background:linear-gradient(90deg,transparent,rgba(110,140,200,.6),transparent);
+    }
+    .dock-icon{
+      width:135px;
+      border-radius:10px;
+      border:1px solid rgba(14,40,80,.9);
+      background:linear-gradient(180deg,#121a30,#070a18);
+      color:var(--muted);
+      font-size:11px;
+      padding:6px 8px;
+      display:flex;align-items:center;gap:6px;
+      cursor:pointer;
+      text-align:left;
+      box-shadow:0 10px 18px rgba(0,0,0,.7);
+    }
+    .dock-icon span.icon{font-size:16px;}
+    .dock-icon:hover{box-shadow:var(--glow);color:#f3f7ff;}
+    .dock-icon.folder{
+      background:linear-gradient(180deg,#20346a,#111835);
+      border-color:#3556a8;
+    }
+
+    /* Окна */
+    .window{
+      position:absolute;
+      display:flex;
+      flex-direction:column;
+      min-width:260px;
+      max-width:560px;
+      min-height:160px;
+      background:linear-gradient(180deg,var(--panel),var(--panel-2));
+      border-radius:10px;
+      border:1px solid rgba(120,160,230,.9);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      backdrop-filter:blur(10px);
+      touch-action:none;
+      opacity:0;
+      transform:scale(.96) translateY(6px);
+      transition:opacity .18s ease,transform .18s ease;
+    }
+    .window.shown{
+      opacity:1;
+      transform:scale(1) translateY(0);
+    }
+    .window.closing{
+      opacity:0;
+      transform:scale(.96) translateY(6px);
+    }
+    .window.minimized{display:none}
+    .window.maximized{
+      top:6px !important;
+      left:6px !important;
+      right:6px !important;
+      bottom:42px !important;
+      width:auto !important;
+      height:auto !important;
+    }
+    .window.locked .window-titlebar{cursor:default;}
+    .window.locked .win-resize,
+    .window.locked .win-resize-edge{display:none;}
+
+    /* Цветовые схемы типов окон */
+    .window.win-index .window-titlebar{
+      background:linear-gradient(180deg,#1c7b61,#095440);
+      border-bottom-color:#042b22;
+    }
+    .window.win-price .window-titlebar{
+      background:linear-gradient(180deg,#4a2ca8,#27136c);
+      border-bottom-color:#130b3d;
+    }
+    .window.win-system .window-titlebar{
+      background:linear-gradient(180deg,#295a9d,#132f5d);
+      border-bottom-color:#07162c;
+    }
+
+    .window-titlebar{
+      height:28px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 6px 0 8px;
+      color:#f5f7ff;
+      border-bottom:1px solid rgba(4,8,18,.9);
+      user-select:none;
+      cursor:move;
+    }
+    .window-caption{
+      display:flex;align-items:center;gap:6px;
+      font-size:12px;font-weight:600;
+      text-shadow:0 1px 0 rgba(0,0,0,.8);
+    }
+    .win-icon{
+      width:14px;height:14px;border-radius:3px;
+      background:radial-gradient(circle at top,#d6efff,#7bc1ff);
+      box-shadow:0 0 0 1px rgba(0,0,0,.6);
+    }
+    .win-icon.green{background:radial-gradient(circle at top,#9bffd9,#3fe3a3);}
+    .win-icon.purple{background:radial-gradient(circle at top,#f2d2ff,#c290ff);}
+
+    .mini-status{
+      display:flex;align-items:center;gap:4px;
+      font-size:10px;
+      margin-left:8px;
+      opacity:.9;
+    }
+    .mini-led{
+      width:7px;height:7px;border-radius:999px;
+      background:#5cffc1;
+      box-shadow:0 0 8px rgba(92,255,193,.8);
+    }
+    .mini-led.warn{
+      background:#ffd86b;
+      box-shadow:0 0 8px rgba(255,216,107,.8);
+    }
+    .mini-led.err{
+      background:#ff8b8b;
+      box-shadow:0 0 8px rgba(255,139,139,.8);
+    }
+    .mini-text{opacity:.9;}
+
+    .window-controls{
+      display:flex;align-items:center;gap:2px;
+    }
+    .win-btn{
+      width:18px;height:18px;
+      border-radius:2px;
+      border:1px solid rgba(5,12,28,.9);
+      background:linear-gradient(180deg,#fdfefe,#cfd4e6);
+      cursor:pointer;
+      font-size:11px;
+      display:flex;align-items:center;justify-content:center;
+      padding:0;
+      box-shadow:0 1px 0 rgba(255,255,255,.6),0 1px 0 rgba(0,0,0,.6) inset;
+    }
+    .win-btn:active{
+      background:linear-gradient(180deg,#c5cad6,#e9ecf6);
+      box-shadow:0 1px 0 rgba(255,255,255,.4) inset;
+      transform:translateY(1px);
+    }
+    .win-btn.close{
+      background:linear-gradient(180deg,#ff7979,#d83838);
+      color:#fff;
+      border-color:#4a0505;
+    }
+    .win-btn.close:active{
+      background:linear-gradient(180deg,#d83838,#ffb0b0);
+    }
+
+    .window-body{
+      padding:6px 8px 2px;
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      background:
+        radial-gradient(circle at top left,rgba(80,135,255,.18),transparent 60%),
+        radial-gradient(circle at bottom right,rgba(57,224,178,.13),transparent 60%),
+        linear-gradient(180deg,#050812,#050910);
+    }
+    .win-status-line{
+      height:16px;
+      padding:1px 6px 2px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      font-size:10px;
+      color:var(--muted);
+      border-top:1px solid rgba(10,20,40,.85);
+      background:linear-gradient(180deg,#050810,#03040a);
+    }
+    .win-status-left,.win-status-right{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+    .info-row{
+      display:flex;flex-wrap:wrap;gap:6px;
+      font-size:11px;
+    }
+    .badge{
+      padding:3px 8px;
+      border-radius:999px;
+      border:1px solid var(--br);
+      background:linear-gradient(180deg,var(--panel),var(--panel-2));
+      color:var(--muted);
+    }
+    .pill{
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid var(--br);
+      background:linear-gradient(180deg,var(--panel),var(--panel-2));
+      display:inline-flex;align-items:center;gap:5px;
+      font-size:11px;
+    }
+    .pill-label{color:var(--muted);}
+    .pill-value{color:var(--text);font-weight:600;}
+
+    .row{
+      display:flex;justify-content:space-between;gap:6px;
+      font-size:11px;color:var(--muted);
+    }
+    .row b{color:var(--text);font-weight:600;}
+
+    /* Панель настроек графика */
+    .chart-toolbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:4px;
+      margin-top:2px;
+      font-size:10px;
+    }
+    .chart-toolbar-group{
+      display:flex;
+      gap:4px;
+      align-items:center;
+    }
+    .chart-toolbar-label{
+      color:var(--muted);
+      padding-right:2px;
+    }
+    .chart-chip{
+      padding:2px 6px;
+      border-radius:999px;
+      border:1px solid var(--br);
+      background:linear-gradient(180deg,var(--panel),var(--panel-2));
+      color:var(--muted);
+      cursor:pointer;
+    }
+    .chart-chip.active{
+      color:#f5f7ff;
+      box-shadow:var(--glow);
+    }
+
+    .chart-shell{
+      margin-top:4px;
+      border-radius:8px;
+      overflow:hidden;
+      background:radial-gradient(circle at top,#041322,#020308);
+      box-shadow:inset 0 0 0 1px rgba(15,28,50,.9);
+      position:relative;
+      flex:1;
+      min-height:160px;
+    }
+    body.compact .chart-shell{min-height:130px;}
+    .chart-shell.hidden{display:none}
+    .chart{
+      width:100%;height:100%;
+    }
+    .chart-overlay-label{
+      position:absolute;
+      left:6px;top:4px;
+      font-size:10px;
+      color:#88ffc6;
+      background:rgba(2,4,14,.8);
+      padding:2px 6px;
+      border-radius:6px;
+      border:1px solid rgba(70,140,210,.8);
+    }
+
+    /* Zoom & View панель */
+    .chart-zoom-panel{
+      position:absolute;
+      right:4px;top:4px;
+      display:flex;
+      align-items:center;
+      gap:4px;
+      font-size:10px;
+      background:rgba(3,6,18,.9);
+      border-radius:6px;
+      border:1px solid rgba(40,70,130,.9);
+      padding:2px 4px;
+    }
+    .zoom-btn{
+      padding:1px 5px;
+      border-radius:6px;
+      border:1px solid transparent;
+      background:transparent;
+      color:var(--muted);
+      cursor:pointer;
+    }
+    .zoom-btn:hover{
+      border-color:rgba(110,160,240,.8);
+      color:#f5f7ff;
+    }
+    .zoom-check{
+      display:flex;align-items:center;gap:3px;
+    }
+    .zoom-check input{cursor:pointer;}
+
+    /* Info-card */
+    .chart-info{
+      position:absolute;
+      right:4px;bottom:4px;
+      min-width:120px;
+      max-width:180px;
+      font-size:10px;
+      padding:4px 6px;
+      border-radius:6px;
+      background:rgba(3,6,18,.9);
+      border:1px solid rgba(40,70,130,.9);
+      color:var(--muted);
+      pointer-events:none;
+    }
+    .chart-info b{color:var(--text);}
+
+    /* Угол и грани ресайза */
+    .win-resize{
+      position:absolute;
+      right:2px;
+      bottom:2px;
+      width:14px;height:14px;
+      cursor:nwse-resize;
+      background:linear-gradient(135deg,transparent 0,transparent 40%,rgba(160,180,230,.4) 40%,rgba(160,180,230,.9) 100%);
+      opacity:.8;
+    }
+    .win-resize-edge{
+      position:absolute;
+      background:transparent;
+    }
+    .win-resize-edge.edge-left,
+    .win-resize-edge.edge-right{
+      top:4px;bottom:18px;width:6px;
+      cursor:ew-resize;
+    }
+    .win-resize-edge.edge-left{left:0;}
+    .win-resize-edge.edge-right{right:0;}
+    .win-resize-edge.edge-top,
+    .win-resize-edge.edge-bottom{
+      left:4px;right:18px;height:6px;
+      cursor:ns-resize;
+    }
+    .win-resize-edge.edge-top{top:0;}
+    .win-resize-edge.edge-bottom{bottom:0;}
+
+    /* Settings */
+    .settings-group{
+      margin-bottom:6px;
+      padding:5px 6px;
+      border-radius:8px;
+      border:1px solid var(--br);
+      background:linear-gradient(180deg,var(--panel),var(--panel-2));
+    }
+    .settings-title{
+      font-size:11px;
+      font-weight:600;
+      margin-bottom:3px;
+      color:var(--text);
+    }
+    .settings-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      align-items:center;
+      font-size:11px;
+    }
+    .settings-chip{
+      padding:3px 8px;
+      border-radius:999px;
+      border:1px solid var(--br);
+      background:linear-gradient(180deg,var(--panel),var(--panel-2));
+      color:var(--muted);
+      cursor:pointer;
+    }
+    .settings-chip.active{
+      color:#f5f7ff;
+      box-shadow:var(--glow);
+    }
+    .settings-toggle-label{
+      display:flex;align-items:center;gap:4px;
+    }
+    .settings-toggle-label input{cursor:pointer;}
+    .settings-btn{
+      padding:4px 8px;
+      border-radius:6px;
+      border:1px solid var(--br);
+      background:linear-gradient(180deg,var(--panel),var(--panel-2));
+      color:var(--muted);
+      font-size:11px;
+      cursor:pointer;
+    }
+    .settings-btn:active{transform:translateY(1px);}
+
+    /* Tips window */
+    .tips-content{
+      font-size:11px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .tips-slide{display:none;}
+    .tips-slide.active{display:block;}
+    .tips-nav{
+      display:flex;justify-content:space-between;gap:6px;margin-top:4px;
+    }
+    .tips-nav button{
+      padding:4px 8px;font-size:11px;border-radius:6px;border:1px solid var(--br);
+      background:linear-gradient(180deg,var(--panel),var(--panel-2));
+      color:var(--muted);cursor:pointer;
+    }
+
+    /* Панель задач */
+    .taskbar{
+      height:40px;
+      padding:4px 6px calc(4px + env(safe-area-inset-bottom));
+      background:linear-gradient(180deg,#141c32,#050813);
+      border-top:1px solid #040612;
+      display:flex;align-items:center;gap:6px;
+      box-shadow:0 -10px 24px rgba(0,0,0,.95);
+      position:relative;
+      z-index:25;
+    }
+    .start-btn{
+      border-radius:20px;
+      border:1px solid rgba(7,40,12,.9);
+      background:linear-gradient(180deg,#3fae5a,#1b6a32);
+      color:#f7fff8;
+      padding:6px 11px;
+      font-size:12px;
+      display:flex;align-items:center;gap:6px;
+      cursor:pointer;
+      box-shadow:0 1px 0 rgba(255,255,255,.6),0 1px 0 rgba(0,0,0,.7) inset;
+    }
+    .start-btn span.icon{font-size:14px}
+    .start-btn:active{
+      background:linear-gradient(180deg,#245f35,#4fd471);
+      transform:translateY(1px);
+    }
+    .task-area{
+      flex:1;
+      display:flex;
+      gap:4px;
+      overflow-x:auto;
+      padding:0 2px;
+    }
+    .task-btn{
+      min-width:110px;
+      border-radius:18px;
+      border:1px solid rgba(10,20,46,.85);
+      background:linear-gradient(180deg,#1a2545,#0c1224);
+      color:var(--muted);
+      font-size:11px;
+      padding:4px 8px;
+      display:flex;align-items:center;gap:5px;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+    .task-btn span.icon{font-size:15px;}
+    .task-btn.active{
+      color:#f3f7ff;
+      background:radial-gradient(circle at top left,#334c92,#131c35);
+      box-shadow:var(--glow);
+    }
+    .task-btn:active{transform:translateY(1px);}
+    .clock{
+      min-width:60px;
+      text-align:right;
+      font-size:11px;
+      color:rgba(220,235,255,.8);
+    }
+
+    /* Start menu */
+    .start-menu{
+      position:absolute;
+      left:4px;
+      bottom:40px;
+      width:220px;
+      border-radius:10px;
+      border:1px solid rgba(20,40,80,.9);
+      background:linear-gradient(180deg,#10162c,#050713);
+      box-shadow:0 18px 40px rgba(0,0,0,.85);
+      padding:6px;
+      display:none;
+      z-index:40;
+    }
+    .start-menu.show{display:block;}
+    .start-section-title{
+      font-size:11px;
+      color:var(--muted);
+      margin:4px 2px;
+    }
+    .start-app-btn{
+      width:100%;
+      text-align:left;
+      padding:4px 6px;
+      border-radius:6px;
+      border:0;
+      background:transparent;
+      color:var(--text);
+      font-size:11px;
+      display:flex;align-items:center;gap:6px;
+      cursor:pointer;
+    }
+    .start-app-btn span.icon{font-size:14px;}
+    .start-app-btn:hover{
+      background:linear-gradient(180deg,#233565,#151a32);
+    }
+
+    /* LOADER */
+    .loader-overlay{
+      position:fixed;inset:0;
+      background:radial-gradient(circle at top,#1a2758,#050816);
+      display:flex;align-items:center;justify-content:center;
+      z-index:200;
+    }
+    .loader-card{
+      width:260px;max-width:80%;
+      background:linear-gradient(180deg,#0c1222,#050910);
+      border-radius:12px;
+      border:1px solid var(--br);
+      padding:16px 14px 14px;
+      box-shadow:var(--shadow);
+      text-align:center;
+    }
+    .spinner{
+      width:40px;height:40px;border-radius:999px;
+      border:3px solid rgba(143,188,255,.25);
+      border-top-color:var(--accent);
+      border-right-color:var(--accent2);
+      margin:0 auto 10px;
+      animation:spin 1s linear infinite;
+      box-shadow:0 0 18px rgba(57,224,178,.6);
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .loader-title{font-size:14px;font-weight:700;margin-bottom:4px;}
+    .loader-sub{font-size:11px;color:var(--muted);margin-bottom:4px;}
+    .loader-mini{font-size:10px;color:var(--muted);opacity:.85;}
+
+    .toast{
+      position:fixed;left:50%;bottom:56px;
+      transform:translateX(-50%) translateY(12px);
+      background:radial-gradient(circle at top,var(--panel),var(--panel-2));
+      border-radius:10px;
+      border:1px solid var(--br);
+      padding:8px 11px;
+      font-size:11px;
+      color:var(--text);
+      box-shadow:var(--shadow);
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .18s,transform .18s;
+      z-index:180;
+    }
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+    /* Контекстное меню окна */
+    .win-context-menu{
+      position:fixed;
+      min-width:160px;
+      background:linear-gradient(180deg,#11182b,#050812);
+      border-radius:8px;
+      border:1px solid rgba(40,70,130,.9);
+      box-shadow:0 18px 40px rgba(0,0,0,.85);
+      font-size:11px;
+      color:var(--text);
+      padding:4px 0;
+      display:none;
+      z-index:160;
+    }
+    .win-context-menu.show{display:block;}
+    .ctx-item{
+      padding:4px 10px;
+      cursor:pointer;
+      display:flex;align-items:center;gap:6px;
+    }
+    .ctx-item:hover{
+      background:linear-gradient(180deg,#233565,#151a32);
+    }
+    .ctx-sep{
+      height:1px;
+      margin:4px 0;
+      background:linear-gradient(90deg,transparent,rgba(100,130,190,.7),transparent);
+    }
+
+    /* Выделение рабочего стола */
+    .desktop-selection{
+      position:absolute;
+      border:1px dashed rgba(140,190,255,.9);
+      background:rgba(80,120,200,.25);
+      pointer-events:none;
+      z-index:5;
+    }
+
+    /* Адаптив под телефоны */
+    @media(max-width:768px){
+      .desktop-area{padding:6px 6px 44px;}
+      .window{max-width:96vw;}
+      .top-sub{display:none;}
+      .top-bar{padding:0 6px;}
+      .task-btn{min-width:120px;}
+      .desktop-dock{top:38px;left:4px;}
+    }
+  </style>
+
+  <!-- Lightweight Charts -->
+  <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js" defer></script>
+  <script>
+    document.addEventListener('gesturestart', e => e.preventDefault());
+    document.addEventListener('dblclick', e => e.preventDefault(), {passive:false});
+  </script>
+</head>
+<body>
+<div class="desktop">
+
+  <!-- LOADER -->
+  <div id="loader" class="loader-overlay">
+    <div class="loader-card">
+      <div class="spinner"></div>
+      <div id="loaderTitle" class="loader-title">TON Desktop</div>
+      <div id="loaderSub" class="loader-sub">Подключаюсь к MEXC, качаю историю цен и индексов…</div>
+      <div id="loaderMini" class="loader-mini">Пока экран загружен — ничего нажимать нельзя, это нормально.</div>
+    </div>
+  </div>
+
+  <!-- Верхняя панель -->
+  <header class="top-bar">
+    <div class="top-left">
+      <span class="top-dot"></span>
+      <span id="topTitle">TON Desktop — Индексы & Charts</span>
+      <span id="topSub" class="top-sub">Рабочий стол для управления индексами и ценами</span>
+    </div>
+    <div class="top-right">
+      <div class="status-pill">
+        <span id="liveLed" class="status-led"></span>
+        <span id="liveStatusText">Live: подключаюсь…</span>
+      </div>
+      <span id="tfInfo">TF: 1m • 3M history mode</span>
+    </div>
+  </header>
+
+  <!-- Основная зона рабочего стола -->
+  <main class="desktop-area" id="desktopArea">
+
+    <!-- Док слева -->
+    <div class="desktop-dock" id="desktopDock">
+      <div class="dock-section-label">Indexes</div>
+      <button class="dock-icon folder" data-open-folder="indexes">
+        <span class="icon">📁</span><span>All Index windows</span>
+      </button>
+      <button class="dock-icon" data-open-app="index-ton-sol">
+        <span class="icon">📊</span><span>Index TON/SOL</span>
+      </button>
+      <button class="dock-icon" data-open-app="index-ton-btc">
+        <span class="icon">📊</span><span>Index TON/BTC</span>
+      </button>
+      <div class="dock-separator"></div>
+      <div class="dock-section-label">Prices</div>
+      <button class="dock-icon folder" data-open-folder="prices">
+        <span class="icon">📁</span><span>All Price windows</span>
+      </button>
+      <button class="dock-icon" data-open-app="price-ton">
+        <span class="icon">💰</span><span>TON/USDT</span>
+      </button>
+      <button class="dock-icon" data-open-app="price-btc">
+        <span class="icon">💰</span><span>BTC/USDT</span>
+      </button>
+      <div class="dock-separator"></div>
+      <div class="dock-section-label">Tools</div>
+      <button class="dock-icon" data-open-app="overview">
+        <span class="icon">📋</span><span>Overview</span>
+      </button>
+      <button class="dock-icon" data-open-app="settings">
+        <span class="icon">⚙️</span><span>Settings</span>
+      </button>
+      <button class="dock-icon" data-open-app="tips">
+        <span class="icon">💡</span><span>Tips / Help</span>
+      </button>
+    </div>
+
+    <div id="desktopHint" class="desktop-hint">
+      💡 Совет: перетаскивай окна, меняй размер (за любой край), сворачивай в панель задач.  
+      Alt+1..5 / Alt+S / Alt+H — горячие клавиши.
+    </div>
+
+    <!-- Окно: Overview (system) -->
+    <section class="window win-system shown" id="win-overview" data-app="overview" style="top:60px;left:160px;width:320px;height:230px;">
+      <div class="window-titlebar">
+        <div class="window-caption">
+          <div class="win-icon green"></div>
+          <span id="titleOverview">System Overview</span>
+          <span class="mini-status">
+            <span class="mini-led" data-mini-led></span>
+            <span class="mini-text" data-mini-text>1m · Candles · Live 5s</span>
+          </span>
+        </div>
+        <div class="window-controls">
+          <button class="win-btn win-min">▁</button>
+          <button class="win-btn win-max">▢</button>
+          <button class="win-btn win-close close">✕</button>
+        </div>
+      </div>
+      <div class="window-body">
+        <div class="info-row">
+          <span id="overviewBadge1" class="badge">TON / BTC / ETH / SOL — краткое резюме</span>
+        </div>
+        <div class="row">
+          <span>TON/USDT:</span>
+          <b data-app="overview" data-role="ton-usdt">—</b>
+        </div>
+        <div class="row">
+          <span>BTC/USDT:</span>
+          <b data-app="overview" data-role="btc-usdt">—</b>
+        </div>
+        <div class="row">
+          <span>ETH/USDT:</span>
+          <b data-app="overview" data-role="eth-usdt">—</b>
+        </div>
+        <div class="row">
+          <span>SOL/USDT:</span>
+          <b data-app="overview" data-role="sol-usdt">—</b>
+        </div>
+        <div class="info-row" style="margin-top:6px;">
+          <span class="pill">
+            <span class="pill-label">Index TON/SOL:</span>
+            <span class="pill-value" data-app="overview" data-role="idx-ton-sol">—</span>
+          </span>
+          <span class="pill">
+            <span class="pill-label">Index TON/BTC:</span>
+            <span class="pill-value" data-app="overview" data-role="idx-ton-btc">—</span>
+          </span>
+        </div>
+        <div class="info-row">
+          <span id="overviewSources" class="badge">Источники: MEXC /klines и /bookTicker</span>
+        </div>
+      </div>
+      <div class="win-status-line">
+        <span class="win-status-left" data-status-left>Last update: —</span>
+        <span class="win-status-right" data-status-right>Source: —</span>
+      </div>
+      <div class="win-resize"></div>
+      <div class="win-resize-edge edge-left"></div>
+      <div class="win-resize-edge edge-right"></div>
+      <div class="win-resize-edge edge-top"></div>
+      <div class="win-resize-edge edge-bottom"></div>
+    </section>
+
+    <!-- Index TON / SOL -->
+    <section class="window win-index" id="win-index-ton-sol" data-app="index-ton-sol" style="top:80px;left:500px;width:360px;height:270px;">
+      <div class="window-titlebar">
+        <div class="window-caption">
+          <div class="win-icon"></div>
+          <span id="titleIndexTonSol">Index TON / SOL</span>
+          <span class="mini-status">
+            <span class="mini-led" data-mini-led></span>
+            <span class="mini-text" data-mini-text>1m · Candles · Live 5s</span>
+          </span>
+        </div>
+        <div class="window-controls">
+          <button class="win-btn win-min">▁</button>
+          <button class="win-btn win-max">▢</button>
+          <button class="win-btn win-close close">✕</button>
+        </div>
+      </div>
+      <div class="window-body">
+        <div class="info-row">
+          <span id="indexTonSolBadge" class="badge">Индекс = (TON / SOL) × 100</span>
+        </div>
+        <div class="info-row">
+          <span class="pill">
+            <span class="pill-label">Index:</span>
+            <span class="pill-value" data-app="index-ton-sol" data-role="index-value">—</span>
+          </span>
+          <span class="pill">
+            <span class="pill-label">TON/SOL:</span>
+            <span class="pill-value" data-app="index-ton-sol" data-role="ratio">—</span>
+          </span>
+        </div>
+        <div class="row">
+          <span>TON/USDT:</span>
+          <b data-app="index-ton-sol" data-role="base-price">—</b>
+        </div>
+        <div class="row">
+          <span>SOL/USDT:</span>
+          <b data-app="index-ton-sol" data-role="other-price">—</b>
+        </div>
+
+        <div class="chart-toolbar">
+          <div class="chart-toolbar-group">
+            <span class="chart-toolbar-label">TF:</span>
+            <button class="chart-chip" data-tf="1m">1m</button>
+            <button class="chart-chip" data-tf="5m">5m</button>
+            <button class="chart-chip" data-tf="15m">15m</button>
+            <button class="chart-chip" data-tf="3M">3M</button>
+          </div>
+        </div>
+
+        <div class="chart-shell">
+          <div class="chart-overlay-label">Live index history TON/SOL</div>
+          <div class="chart-zoom-panel" data-zoom-panel>
+            <button class="zoom-btn" data-zoom="reset">Reset</button>
+            <button class="zoom-btn" data-zoom="1D">1D</button>
+            <button class="zoom-btn" data-zoom="1W">1W</button>
+            <button class="zoom-btn" data-zoom="1M">1M</button>
+            <button class="zoom-btn" data-zoom="3M">3M</button>
+            <label class="zoom-check"><input type="checkbox" data-zoom-cross checked>✛</label>
+            <label class="zoom-check"><input type="checkbox" data-zoom-grid checked>☰</label>
+          </div>
+          <div class="chart" data-app-chart="index-ton-sol"></div>
+          <div class="chart-info" data-app-info="index-ton-sol">—</div>
+        </div>
+      </div>
+      <div class="win-status-line">
+        <span class="win-status-left" data-status-left>Last update: —</span>
+        <span class="win-status-right" data-status-right>Source: —</span>
+      </div>
+      <div class="win-resize"></div>
+      <div class="win-resize-edge edge-left"></div>
+      <div class="win-resize-edge edge-right"></div>
+      <div class="win-resize-edge edge-top"></div>
+      <div class="win-resize-edge edge-bottom"></div>
+    </section>
+
+    <!-- Index TON / BTC -->
+    <section class="window win-index" id="win-index-ton-btc" data-app="index-ton-btc" style="top:270px;left:420px;width:360px;height:270px;">
+      <div class="window-titlebar">
+        <div class="window-caption">
+          <div class="win-icon"></div>
+          <span id="titleIndexTonBtc">Index TON / BTC</span>
+          <span class="mini-status">
+            <span class="mini-led" data-mini-led></span>
+            <span class="mini-text" data-mini-text>1m · Candles · Live 5s</span>
+          </span>
+        </div>
+        <div class="window-controls">
+          <button class="win-btn win-min">▁</button>
+          <button class="win-btn win-max">▢</button>
+          <button class="win-btn win-close close">✕</button>
+        </div>
+      </div>
+      <div class="window-body">
+        <div class="info-row">
+          <span id="indexTonBtcBadge" class="badge">Индекс = (TON / BTC) × 100</span>
+        </div>
+        <div class="info-row">
+          <span class="pill">
+            <span class="pill-label">Index:</span>
+            <span class="pill-value" data-app="index-ton-btc" data-role="index-value">—</span>
+          </span>
+          <span class="pill">
+            <span class="pill-label">TON/BTC:</span>
+            <span class="pill-value" data-app="index-ton-btc" data-role="ratio">—</span>
+          </span>
+        </div>
+        <div class="row">
+          <span>TON/USDT:</span>
+          <b data-app="index-ton-btc" data-role="base-price">—</b>
+        </div>
+        <div class="row">
+          <span>BTC/USDT:</span>
+          <b data-app="index-ton-btc" data-role="other-price">—</b>
+        </div>
+
+        <div class="chart-toolbar">
+          <div class="chart-toolbar-group">
+            <span class="chart-toolbar-label">TF:</span>
+            <button class="chart-chip" data-tf="1m">1m</button>
+            <button class="chart-chip" data-tf="5m">5m</button>
+            <button class="chart-chip" data-tf="15m">15m</button>
+            <button class="chart-chip" data-tf="3M">3M</button>
+          </div>
+        </div>
+
+        <div class="chart-shell">
+          <div class="chart-overlay-label">Live index history TON/BTC</div>
+          <div class="chart-zoom-panel" data-zoom-panel>
+            <button class="zoom-btn" data-zoom="reset">Reset</button>
+            <button class="zoom-btn" data-zoom="1D">1D</button>
+            <button class="zoom-btn" data-zoom="1W">1W</button>
+            <button class="zoom-btn" data-zoom="1M">1M</button>
+            <button class="zoom-btn" data-zoom="3M">3M</button>
+            <label class="zoom-check"><input type="checkbox" data-zoom-cross checked>✛</label>
+            <label class="zoom-check"><input type="checkbox" data-zoom-grid checked>☰</label>
+          </div>
+          <div class="chart" data-app-chart="index-ton-btc"></div>
+          <div class="chart-info" data-app-info="index-ton-btc">—</div>
+        </div>
+      </div>
+      <div class="win-status-line">
+        <span class="win-status-left" data-status-left>Last update: —</span>
+        <span class="win-status-right" data-status-right>Source: —</span>
+      </div>
+      <div class="win-resize"></div>
+      <div class="win-resize-edge edge-left"></div>
+      <div class="win-resize-edge edge-right"></div>
+      <div class="win-resize-edge edge-top"></div>
+      <div class="win-resize-edge edge-bottom"></div>
+    </section>
+
+    <!-- Price TON / USDT -->
+    <section class="window win-price" id="win-price-ton" data-app="price-ton" style="top:80px;left:230px;width:340px;height:270px;">
+      <div class="window-titlebar">
+        <div class="window-caption">
+          <div class="win-icon purple"></div>
+          <span id="titlePriceTon">TON / USDT — Price</span>
+          <span class="mini-status">
+            <span class="mini-led" data-mini-led></span>
+            <span class="mini-text" data-mini-text>1m · Candles · Live 5s</span>
+          </span>
+        </div>
+        <div class="window-controls">
+          <button class="win-btn win-min">▁</button>
+          <button class="win-btn win-max">▢</button>
+          <button class="win-btn win-close close">✕</button>
+        </div>
+      </div>
+      <div class="window-body">
+        <div class="info-row">
+          <span id="priceTonBadge" class="badge">Основной ценовой график TON/USDT</span>
+        </div>
+        <div class="info-row">
+          <span class="pill">
+            <span class="pill-label">TON/USDT:</span>
+            <span class="pill-value" data-app="price-ton" data-role="asset-usdt">—</span>
+          </span>
+          <span class="pill">
+            <span class="pill-label">USDT/TON:</span>
+            <span class="pill-value" data-app="price-ton" data-role="usdt-asset">—</span>
+          </span>
+        </div>
+
+        <div class="chart-toolbar">
+          <div class="chart-toolbar-group">
+            <span class="chart-toolbar-label">Тип:</span>
+            <button class="chart-chip" data-type="candles">Candles</button>
+            <button class="chart-chip" data-type="line">Line</button>
+          </div>
+          <div class="chart-toolbar-group">
+            <span class="chart-toolbar-label">TF:</span>
+            <button class="chart-chip" data-tf="1m">1m</button>
+            <button class="chart-chip" data-tf="5m">5m</button>
+            <button class="chart-chip" data-tf="15m">15m</button>
+            <button class="chart-chip" data-tf="3M">3M</button>
+          </div>
+        </div>
+
+        <div class="chart-shell">
+          <div class="chart-overlay-label">TON/USDT — XP-style chart</div>
+          <div class="chart-zoom-panel" data-zoom-panel>
+            <button class="zoom-btn" data-zoom="reset">Reset</button>
+            <button class="zoom-btn" data-zoom="1D">1D</button>
+            <button class="zoom-btn" data-zoom="1W">1W</button>
+            <button class="zoom-btn" data-zoom="1M">1M</button>
+            <button class="zoom-btn" data-zoom="3M">3M</button>
+            <label class="zoom-check"><input type="checkbox" data-zoom-cross checked>✛</label>
+            <label class="zoom-check"><input type="checkbox" data-zoom-grid checked>☰</label>
+          </div>
+          <div class="chart" data-app-chart="price-ton"></div>
+          <div class="chart-info" data-app-info="price-ton">—</div>
+        </div>
+      </div>
+      <div class="win-status-line">
+        <span class="win-status-left" data-status-left>Last update: —</span>
+        <span class="win-status-right" data-status-right>Source: —</span>
+      </div>
+      <div class="win-resize"></div>
+      <div class="win-resize-edge edge-left"></div>
+      <div class="win-resize-edge edge-right"></div>
+      <div class="win-resize-edge edge-top"></div>
+      <div class="win-resize-edge edge-bottom"></div>
+    </section>
+
+    <!-- Price BTC / USDT -->
+    <section class="window win-price" id="win-price-btc" data-app="price-btc" style="top:270px;left:80px;width:340px;height:270px;">
+      <div class="window-titlebar">
+        <div class="window-caption">
+          <div class="win-icon purple"></div>
+          <span id="titlePriceBtc">BTC / USDT — Price</span>
+          <span class="mini-status">
+            <span class="mini-led" data-mini-led></span>
+            <span class="mini-text" data-mini-text>1m · Candles · Live 5s</span>
+          </span>
+        </div>
+        <div class="window-controls">
+          <button class="win-btn win-min">▁</button>
+          <button class="win-btn win-max">▢</button>
+          <button class="win-btn win-close close">✕</button>
+        </div>
+      </div>
+      <div class="window-body">
+        <div class="info-row">
+          <span id="priceBtcBadge" class="badge">Классический BTC/USDT для ориентира рынка</span>
+        </div>
+        <div class="info-row">
+          <span class="pill">
+            <span class="pill-label">BTC/USDT:</span>
+            <span class="pill-value" data-app="price-btc" data-role="asset-usdt">—</span>
+          </span>
+          <span class="pill">
+            <span class="pill-label">USDT/BTC:</span>
+            <span class="pill-value" data-app="price-btc" data-role="usdt-asset">—</span>
+          </span>
+        </div>
+
+        <div class="chart-toolbar">
+          <div class="chart-toolbar-group">
+            <span class="chart-toolbar-label">Тип:</span>
+            <button class="chart-chip" data-type="candles">Candles</button>
+            <button class="chart-chip" data-type="line">Line</button>
+          </div>
+          <div class="chart-toolbar-group">
+            <span class="chart-toolbar-label">TF:</span>
+            <button class="chart-chip" data-tf="1m">1m</button>
+            <button class="chart-chip" data-tf="5m">5m</button>
+            <button class="chart-chip" data-tf="15m">15m</button>
+            <button class="chart-chip" data-tf="3M">3M</button>
+          </div>
+        </div>
+
+        <div class="chart-shell">
+          <div class="chart-overlay-label">BTC/USDT — XP-style chart</div>
+          <div class="chart-zoom-panel" data-zoom-panel>
+            <button class="zoom-btn" data-zoom="reset">Reset</button>
+            <button class="zoom-btn" data-zoom="1D">1D</button>
+            <button class="zoom-btn" data-zoom="1W">1W</button>
+            <button class="zoom-btn" data-zoom="1M">1M</button>
+            <button class="zoom-btn" data-zoom="3M">3M</button>
+            <label class="zoom-check"><input type="checkbox" data-zoom-cross checked>✛</label>
+            <label class="zoom-check"><input type="checkbox" data-zoom-grid checked>☰</label>
+          </div>
+          <div class="chart" data-app-chart="price-btc"></div>
+          <div class="chart-info" data-app-info="price-btc">—</div>
+        </div>
+      </div>
+      <div class="win-status-line">
+        <span class="win-status-left" data-status-left>Last update: —</span>
+        <span class="win-status-right" data-status-right>Source: —</span>
+      </div>
+      <div class="win-resize"></div>
+      <div class="win-resize-edge edge-left"></div>
+      <div class="win-resize-edge edge-right"></div>
+      <div class="win-resize-edge edge-top"></div>
+      <div class="win-resize-edge edge-bottom"></div>
+    </section>
+
+    <!-- Settings -->
+    <section class="window win-system" id="win-settings" data-app="settings" style="top:90px;left:620px;width:320px;height:290px;">
+      <div class="window-titlebar">
+        <div class="window-caption">
+          <div class="win-icon green"></div>
+          <span id="titleSettings">Settings</span>
+          <span class="mini-status">
+            <span class="mini-led" data-mini-led></span>
+            <span class="mini-text" data-mini-text>Profile & layout</span>
+          </span>
+        </div>
+        <div class="window-controls">
+          <button class="win-btn win-min">▁</button>
+          <button class="win-btn win-max">▢</button>
+          <button class="win-btn win-close close">✕</button>
+        </div>
+      </div>
+      <div class="window-body">
+
+        <div class="settings-group">
+          <div class="settings-title">Layout profiles</div>
+          <div class="settings-row">
+            <button class="settings-chip" data-layout-preset="scalper">Scalper layout</button>
+            <button class="settings-chip" data-layout-preset="index">Index layout</button>
+            <button class="settings-chip" data-layout-preset="full">Full desk</button>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div id="settingsLangTitle" class="settings-title">Язык / Language</div>
+          <div class="settings-row">
+            <button class="settings-chip" data-setting="lang" data-value="ru">RU</button>
+            <button class="settings-chip" data-setting="lang" data-value="en">EN</button>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div id="settingsNumTitle" class="settings-title">Формат числа</div>
+          <div class="settings-row">
+            <span class="settings-title" style="font-size:11px;">Dec:</span>
+            <button class="settings-chip" data-setting="decimals" data-value="2">2</button>
+            <button class="settings-chip" data-setting="decimals" data-value="4">4</button>
+            <button class="settings-chip" data-setting="decimals" data-value="6">6</button>
+            <span class="settings-toggle-label">
+              <input type="checkbox" id="chkThousands">
+              <span id="settingsThousandsLabel">Разделитель тысяч</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div id="settingsPerfTitle" class="settings-title">Производительность и live</div>
+          <div class="settings-row">
+            <span class="settings-toggle-label">
+              <input type="checkbox" id="chkAnimations" checked>
+              <span id="settingsAnimLabel">Анимации</span>
+            </span>
+          </div>
+          <div class="settings-row" style="margin-top:4px;">
+            <span class="settings-title" style="font-size:11px;">Live:</span>
+            <button class="settings-chip" data-setting="live" data-value="1000">1s</button>
+            <button class="settings-chip" data-setting="live" data-value="3000">3s</button>
+            <button class="settings-chip" data-setting="live" data-value="5000">5s</button>
+            <button class="settings-chip" data-setting="live" data-value="10000">10s</button>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div id="settingsThemeTitle" class="settings-title">Тема</div>
+          <div class="settings-row">
+            <button class="settings-chip active" data-setting="theme" data-value="darkXP">Dark XP</button>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div id="settingsLayoutTitle" class="settings-title">Раскладка окон</div>
+          <div class="settings-row">
+            <button class="settings-btn" id="btnSaveLayout">💾 Save layout</button>
+            <button class="settings-btn" id="btnResetLayout">♻ Reset</button>
+          </div>
+        </div>
+
+      </div>
+      <div class="win-status-line">
+        <span class="win-status-left" data-status-left>Profiles & settings</span>
+        <span class="win-status-right" data-status-right>Hotkeys: Alt+S</span>
+      </div>
+      <div class="win-resize"></div>
+      <div class="win-resize-edge edge-left"></div>
+      <div class="win-resize-edge edge-right"></div>
+      <div class="win-resize-edge edge-top"></div>
+      <div class="win-resize-edge edge-bottom"></div>
+    </section>
+
+    <!-- Tips / Help -->
+    <section class="window win-system" id="win-tips" data-app="tips" style="top:120px;left:360px;width:320px;height:220px;">
+      <div class="window-titlebar">
+        <div class="window-caption">
+          <div class="win-icon green"></div>
+          <span>Tips / Help</span>
+          <span class="mini-status">
+            <span class="mini-led" data-mini-led></span>
+            <span class="mini-text" data-mini-text>Alt+H</span>
+          </span>
+        </div>
+        <div class="window-controls">
+          <button class="win-btn win-min">▁</button>
+          <button class="win-btn win-max">▢</button>
+          <button class="win-btn win-close close">✕</button>
+        </div>
+      </div>
+      <div class="window-body">
+        <div class="tips-content">
+          <div class="tips-slide active" data-tip-slide="1">
+            <b>1. Управление окнами</b><br>
+            • Перетаскивай заголовок, меняй размер за любой край или угол.<br>
+            • ПКМ по окну → Pin / Snap / Lock.<br>
+            • Раскладки: Scalper / Index / Full desk в Settings.
+          </div>
+          <div class="tips-slide" data-tip-slide="2">
+            <b>2. Графики и live</b><br>
+            • Выбор TF и типа графика — чипы под заголовком.<br>
+            • Zoom-панель в углу графика: Reset / 1D / 1W / 1M / 3M.<br>
+            • Info-card снизу графика показывает время и OHLC.
+          </div>
+          <div class="tips-slide" data-tip-slide="3">
+            <b>3. Горячие клавиши</b><br>
+            Alt+1 — Overview<br>
+            Alt+2 — Index TON/SOL<br>
+            Alt+3 — Index TON/BTC<br>
+            Alt+4 — TON/USDT<br>
+            Alt+5 — BTC/USDT<br>
+            Alt+S — Settings<br>
+            Alt+H — Tips / Help
+          </div>
+          <div class="tips-nav">
+            <button id="btnTipPrev">◀</button>
+            <button id="btnTipNext">▶</button>
+          </div>
+        </div>
+      </div>
+      <div class="win-status-line">
+        <span class="win-status-left" data-status-left>First run: tips auto-open</span>
+        <span class="win-status-right" data-status-right>Start → Tips / Help</span>
+      </div>
+      <div class="win-resize"></div>
+      <div class="win-resize-edge edge-left"></div>
+      <div class="win-resize-edge edge-right"></div>
+      <div class="win-resize-edge edge-top"></div>
+      <div class="win-resize-edge edge-bottom"></div>
+    </section>
+
+    <!-- Контекстное меню окна -->
+    <div id="winContext" class="win-context-menu">
+      <div class="ctx-item" data-ctx="pin"><span>📌</span><span>Pin on top</span></div>
+      <div class="ctx-item" data-ctx="snap-left"><span>⬅️</span><span>Snap left</span></div>
+      <div class="ctx-item" data-ctx="snap-right"><span>➡️</span><span>Snap right</span></div>
+      <div class="ctx-item" data-ctx="snap-center"><span>⬜</span><span>Snap center</span></div>
+      <div class="ctx-sep"></div>
+      <div class="ctx-item" data-ctx="lock"><span>🔒</span><span>Lock / Unlock</span></div>
+    </div>
+
+    <!-- Выделение рабочего стола -->
+    <div id="desktopSelection" class="desktop-selection hidden"></div>
+
+  </main>
+
+  <!-- Панель задач -->
+  <footer class="taskbar">
+    <button class="start-btn" id="btnStart"><span class="icon">🪟</span><span>Start</span></button>
+    <div class="task-area">
+      <button class="task-btn active" data-open-app="overview"><span class="icon">📋</span><span>Overview</span></button>
+      <button class="task-btn" data-open-app="index-ton-sol"><span class="icon">📊</span><span>Index TON/SOL</span></button>
+      <button class="task-btn" data-open-app="index-ton-btc"><span class="icon">📊</span><span>Index TON/BTC</span></button>
+      <button class="task-btn" data-open-app="price-ton"><span class="icon">💰</span><span>TON/USDT</span></button>
+      <button class="task-btn" data-open-app="price-btc"><span class="icon">💰</span><span>BTC/USDT</span></button>
+      <button class="task-btn" data-open-app="settings"><span class="icon">⚙️</span><span>Settings</span></button>
+      <button class="task-btn" data-open-app="tips"><span class="icon">💡</span><span>Tips</span></button>
+    </div>
+    <div class="clock" id="clock"></div>
+
+    <!-- Start menu -->
+    <div id="startMenu" class="start-menu">
+      <div class="start-section-title">Apps</div>
+      <button class="start-app-btn" data-open-app="overview"><span class="icon">📋</span><span>Overview</span></button>
+      <button class="start-app-btn" data-open-app="index-ton-sol"><span class="icon">📊</span><span>Index TON/SOL</span></button>
+      <button class="start-app-btn" data-open-app="index-ton-btc"><span class="icon">📊</span><span>Index TON/BTC</span></button>
+      <button class="start-app-btn" data-open-app="price-ton"><span class="icon">💰</span><span>TON/USDT</span></button>
+      <button class="start-app-btn" data-open-app="price-btc"><span class="icon">💰</span><span>BTC/USDT</span></button>
+      <button class="start-app-btn" data-open-app="settings"><span class="icon">⚙️</span><span>Settings</span></button>
+      <button class="start-app-btn" data-open-app="tips"><span class="icon">💡</span><span>Tips / Help</span></button>
+    </div>
+  </footer>
+</div>
+
+<div id="toast" class="toast">Сообщение</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const qsa = (sel,root=document)=>[...root.querySelectorAll(sel)];
+
+  const SETTINGS_KEY = "tonDesktop_settings_v2";
+  const LAYOUT_KEY   = "tonDesktop_layout_v2";
+  const TIPS_KEY     = "tonDesktop_seenTips_v1";
+
+  let Settings = {
+    lang:"ru",
+    decimals:6,
+    thousand:false,
+    animations:true,
+    liveInterval:5000,
+    theme:"darkXP"
+  };
+
+  const I18N = {
+    ru:{
+      topTitle:"TON Desktop — Индексы & Charts",
+      topSub:"Рабочий стол для управления индексами и ценами",
+      loaderTitle:"TON Desktop",
+      loaderSub:"Подключаюсь к MEXC, качаю историю цен и индексов…",
+      loaderMini:"Пока экран загружен — ничего нажимать нельзя, это нормально.",
+      desktopHint:"💡 Совет: перетаскивай окна, меняй размер (за любой край), сворачивай в панель задач.\nAlt+1..5 / Alt+S / Alt+H — горячие клавиши.",
+      liveConnecting:"Live: подключаюсь…",
+      liveOnline:"Live: онлайн",
+      liveOffline:"Live: оффлайн",
+      tfInfoPrefix:"TF",
+      overviewTitle:"System Overview",
+      overviewBadge:"TON / BTC / ETH / SOL — краткое резюме",
+      overviewSources:"Источники: MEXC /klines и /bookTicker",
+      indexTonSolTitle:"Index TON / SOL",
+      indexTonSolBadge:"Индекс = (TON / SOL) × 100",
+      indexTonBtcTitle:"Index TON / BTC",
+      indexTonBtcBadge:"Индекс = (TON / BTC) × 100",
+      priceTonTitle:"TON / USDT — Price",
+      priceTonBadge:"Основной ценовой график TON/USDT",
+      priceBtcTitle:"BTC / USDT — Price",
+      priceBtcBadge:"Классический BTC/USDT для ориентира рынка",
+      settingsTitle:"Settings",
+      settingsLangTitle:"Язык / Language",
+      settingsNumTitle:"Формат числа",
+      settingsThousandsLabel:"Разделитель тысяч",
+      settingsPerfTitle:"Производительность и live",
+      settingsAnimLabel:"Анимации",
+      settingsThemeTitle:"Тема",
+      settingsLayoutTitle:"Раскладка окон"
+    },
+    en:{
+      topTitle:"TON Desktop — Indexes & Charts",
+      topSub:"Desktop for managing TON indexes and prices",
+      loaderTitle:"TON Desktop",
+      loaderSub:"Connecting to MEXC, loading price and index history…",
+      loaderMini:"While loading screen is active, controls are temporarily locked.",
+      desktopHint:"💡 Tip: drag windows, resize from any edge, minimize to taskbar.\nAlt+1..5 / Alt+S / Alt+H — hotkeys.",
+      liveConnecting:"Live: connecting…",
+      liveOnline:"Live: online",
+      liveOffline:"Live: offline",
+      tfInfoPrefix:"TF",
+      overviewTitle:"System Overview",
+      overviewBadge:"TON / BTC / ETH / SOL — quick overview",
+      overviewSources:"Sources: MEXC /klines and /bookTicker",
+      indexTonSolTitle:"Index TON / SOL",
+      indexTonSolBadge:"Index = (TON / SOL) × 100",
+      indexTonBtcTitle:"Index TON / BTC",
+      indexTonBtcBadge:"Index = (TON / BTC) × 100",
+      priceTonTitle:"TON / USDT — Price",
+      priceTonBadge:"Main price chart TON/USDT",
+      priceBtcTitle:"BTC / USDT — Price",
+      priceBtcBadge:"Classic BTC/USDT for market context",
+      settingsTitle:"Settings",
+      settingsLangTitle:"Language",
+      settingsNumTitle:"Number format",
+      settingsThousandsLabel:"Thousands separator",
+      settingsPerfTitle:"Performance & live",
+      settingsAnimLabel:"Animations",
+      settingsThemeTitle:"Theme",
+      settingsLayoutTitle:"Window layout"
+    }
+  };
+
+  function loadSettings(){
+    try{
+      const raw = localStorage.getItem(SETTINGS_KEY);
+      if(!raw) return;
+      const obj = JSON.parse(raw);
+      Object.assign(Settings, obj || {});
+    }catch(e){}
+  }
+  function saveSettings(){
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(Settings));
+  }
+
+  function applyLanguage(){
+    const lang = Settings.lang;
+    const t = I18N[lang] || I18N.ru;
+    $("topTitle").textContent = t.topTitle;
+    $("topSub").textContent = t.topSub;
+    $("loaderTitle").textContent = t.loaderTitle;
+    $("loaderSub").textContent = t.loaderSub;
+    $("loaderMini").textContent = t.loaderMini;
+    $("desktopHint").textContent = t.desktopHint;
+    $("titleOverview").textContent = t.overviewTitle;
+    $("overviewBadge1").textContent = t.overviewBadge;
+    $("overviewSources").textContent = t.overviewSources;
+    $("titleIndexTonSol").textContent = t.indexTonSolTitle;
+    $("indexTonSolBadge").textContent = t.indexTonSolBadge;
+    $("titleIndexTonBtc").textContent = t.indexTonBtcTitle;
+    $("indexTonBtcBadge").textContent = t.indexTonBtcBadge;
+    $("titlePriceTon").textContent = t.priceTonTitle;
+    $("priceTonBadge").textContent = t.priceTonBadge;
+    $("titlePriceBtc").textContent = t.priceBtcTitle;
+    $("priceBtcBadge").textContent = t.priceBtcBadge;
+    $("titleSettings").textContent = t.settingsTitle;
+    $("settingsLangTitle").textContent = t.settingsLangTitle;
+    $("settingsNumTitle").textContent = t.settingsNumTitle;
+    $("settingsThousandsLabel").textContent = t.settingsThousandsLabel;
+    $("settingsPerfTitle").textContent = t.settingsPerfTitle;
+    $("settingsAnimLabel").textContent = t.settingsAnimLabel;
+    $("settingsThemeTitle").textContent = t.settingsThemeTitle;
+    $("settingsLayoutTitle").textContent = t.settingsLayoutTitle;
+  }
+
+  function formatNumber(n, pDefault=Settings.decimals){
+    if(n==null || isNaN(n)) return "—";
+    const decimals = Settings.decimals ?? pDefault;
+    const num = +n;
+    if(Settings.thousand){
+      const loc = Settings.lang === "ru" ? "ru-RU" : "en-US";
+      return num.toLocaleString(loc,{
+        minimumFractionDigits:decimals,
+        maximumFractionDigits:decimals
+      });
+    }
+    return num.toFixed(decimals);
+  }
+  const fmt = formatNumber;
+
+  function toast(msg, ms=2200){
+    const el = $("toast"); if(!el) return;
+    el.textContent = msg;
+    el.classList.add("show");
+    setTimeout(()=>el.classList.remove("show"), ms);
+  }
+
+  function updateClock(){
+    const now=new Date();
+    const hh = String(now.getHours()).padStart(2,"0");
+    const mm = String(now.getMinutes()).padStart(2,"0");
+    $("clock").textContent = hh+":"+mm;
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  function timeStr(){
+    const d=new Date();
+    const pad=n=>String(n).padStart(2,"0");
+    return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
+
+  function saveLayout(){
+    const layout = {};
+    const desk = $("desktopArea").getBoundingClientRect();
+    qsa(".window").forEach(w=>{
+      const app = w.dataset.app;
+      if(!app) return;
+      const rect = w.getBoundingClientRect();
+      layout[app] = {
+        left: parseInt(w.style.left)|| (rect.left - desk.left),
+        top:  parseInt(w.style.top)|| (rect.top - desk.top),
+        width: parseInt(w.style.width)|| rect.width,
+        height: parseInt(w.style.height)|| rect.height,
+        minimized: w.classList.contains("minimized"),
+        maximized: w.classList.contains("maximized")
+      };
+    });
+    localStorage.setItem(LAYOUT_KEY, JSON.stringify(layout));
+    toast(Settings.lang==="ru" ? "Раскладка сохранена" : "Layout saved");
+  }
+
+  function loadLayout(){
+    try{
+      const raw = localStorage.getItem(LAYOUT_KEY);
+      if(!raw) return;
+      const layout = JSON.parse(raw);
+      qsa(".window").forEach(w=>{
+        const app = w.dataset.app;
+        if(!app || !layout[app]) return;
+        const cfg = layout[app];
+        if(typeof cfg.left==="number") w.style.left = cfg.left+"px";
+        if(typeof cfg.top==="number")  w.style.top  = cfg.top+"px";
+        if(typeof cfg.width==="number") w.style.width = cfg.width+"px";
+        if(typeof cfg.height==="number") w.style.height = cfg.height+"px";
+        w.classList.toggle("minimized", !!cfg.minimized);
+        w.classList.toggle("maximized", !!cfg.maximized);
+      });
+    }catch(e){}
+  }
+
+  function resetLayout(){
+    localStorage.removeItem(LAYOUT_KEY);
+    location.reload();
+  }
+
+  // Preset layouts
+  const PRESET_LAYOUTS = {
+    scalper:{
+      overview:{left:20,top:50,width:300,height:200,minimized:false,maximized:false},
+      "index-ton-sol":{left:340,top:50,width:320,height:240,minimized:false,maximized:false},
+      "price-ton":{left:20,top:260,width:320,height:230,minimized:false,maximized:false},
+      "price-btc":{left:350,top:260,width:320,height:230,minimized:true,maximized:false},
+      "index-ton-btc":{left:700,top:50,width:320,height:240,minimized:true,maximized:false},
+      settings:{left:700,top:260,width:280,height:240,minimized:true,maximized:false},
+      tips:{left:360,top:120,width:280,height:200,minimized:true,maximized:false}
+    },
+    index:{
+      overview:{left:20,top:50,width:300,height:200,minimized:false,maximized:false},
+      "index-ton-sol":{left:340,top:50,width:360,height:240,minimized:false,maximized:false},
+      "index-ton-btc":{left:340,top:260,width:360,height:240,minimized:false,maximized:false},
+      "price-ton":{left:20,top:260,width:320,height:230,minimized:true,maximized:false},
+      "price-btc":{left:720,top:260,width:320,height:230,minimized:true,maximized:false},
+      settings:{left:720,top:50,width:280,height:240,minimized:true,maximized:false},
+      tips:{left:360,top:120,width:280,height:200,minimized:true,maximized:false}
+    },
+    full:{
+      overview:{left:10,top:40,width:280,height:220,minimized:false,maximized:false},
+      "price-ton":{left:300,top:40,width:340,height:240,minimized:false,maximized:false},
+      "price-btc":{left:650,top:40,width:340,height:240,minimized:false,maximized:false},
+      "index-ton-sol":{left:300,top:290,width:340,height:240,minimized:false,maximized:false},
+      "index-ton-btc":{left:650,top:290,width:340,height:240,minimized:false,maximized:false},
+      settings:{left:10,top:270,width:280,height:240,minimized:false,maximized:false},
+      tips:{left:360,top:120,width:280,height:200,minimized:true,maximized:false}
+    }
+  };
+
+  function applyPresetLayout(name){
+    const preset = PRESET_LAYOUTS[name];
+    if(!preset) return;
+    const desk = $("desktopArea").getBoundingClientRect();
+    qsa(".window").forEach(w=>{
+      const app = w.dataset.app;
+      if(!app || !preset[app]) return;
+      const cfg = preset[app];
+      w.style.left = cfg.left+"px";
+      w.style.top  = cfg.top+"px";
+      w.style.width= cfg.width+"px";
+      w.style.height=cfg.height+"px";
+      w.classList.toggle("minimized", !!cfg.minimized);
+      w.classList.toggle("maximized", !!cfg.maximized);
+      if(!cfg.minimized) showWindow(app,false);
+    });
+    saveLayout();
+    toast(Settings.lang==="ru" ? `Профиль: ${name}` : `Profile: ${name}`);
+  }
+
+  // DRAG + SNAP + RESIZE
+  let dragState=null;
+  let resizeState=null;
+  let zCounter=40;
+  const pinnedApps = new Set();
+
+  function bringToFront(win){
+    if(win.dataset.pinned==="true"){
+      win.style.zIndex = 9999;
+      return;
+    }
+    zCounter++;
+    win.style.zIndex = zCounter;
+  }
+
+  function setTaskActive(appKey){
+    qsa(".task-btn").forEach(b=>{
+      b.classList.toggle("active", b.dataset.openApp===appKey);
+    });
+  }
+
+  function showWindow(appKey, doAnim=true){
+    const win = document.querySelector(`.window[data-app="${appKey}"]`);
+    if(!win) return;
+    win.classList.remove("minimized","closing");
+    if(doAnim) win.classList.add("shown");
+    bringToFront(win);
+    setTaskActive(appKey);
+  }
+
+  function minimizeWindow(win){
+    win.classList.add("closing");
+    setTimeout(()=>{
+      win.classList.remove("closing","shown");
+      win.classList.add("minimized");
+    }, Settings.animations ? 160 : 0);
+  }
+
+  document.addEventListener("pointerdown", e=>{
+    const win = e.target.closest(".window");
+    if(win && !win.classList.contains("minimized")){
+      bringToFront(win);
+    }
+
+    // resize edges
+    const edge = e.target.closest(".win-resize-edge, .win-resize");
+    if(edge){
+      const w = edge.closest(".window");
+      if(!w || w.classList.contains("locked")) return;
+      const rect = w.getBoundingClientRect();
+      const desk = $("desktopArea").getBoundingClientRect();
+      let mode="br";
+      if(edge.classList.contains("edge-left")) mode="left";
+      else if(edge.classList.contains("edge-right")) mode="right";
+      else if(edge.classList.contains("edge-top")) mode="top";
+      else if(edge.classList.contains("edge-bottom")) mode="bottom";
+      else mode="br";
+      resizeState = {
+        win:w,
+        startX:e.clientX,
+        startY:e.clientY,
+        startLeft:rect.left-desk.left,
+        startTop:rect.top-desk.top,
+        startW:rect.width,
+        startH:rect.height,
+        deskW:desk.width,
+        deskH:desk.height,
+        mode
+      };
+      e.preventDefault();
+      return;
+    }
+
+    // drag
+    const bar = e.target.closest(".window-titlebar");
+    if(bar){
+      const w = bar.closest(".window");
+      if(!w || w.classList.contains("locked")) return;
+      const desk = $("desktopArea").getBoundingClientRect();
+      const rect = w.getBoundingClientRect();
+      dragState = {
+        win:w,
+        startX:e.clientX,
+        startY:e.clientY,
+        offsetX:rect.left - desk.left,
+        offsetY:rect.top - desk.top,
+        deskW:desk.width,
+        deskH:desk.height
+      };
+      e.preventDefault();
+      return;
+    }
+
+    // desktop selection
+    if(e.target.id==="desktopArea"){
+      const sel = $("desktopSelection");
+      const desk = $("desktopArea").getBoundingClientRect();
+      const startX = e.clientX - desk.left;
+      const startY = e.clientY - desk.top;
+      sel.dataset.x0 = startX;
+      sel.dataset.y0 = startY;
+      sel.style.left = startX+"px";
+      sel.style.top  = startY+"px";
+      sel.style.width="0px";
+      sel.style.height="0px";
+      sel.classList.remove("hidden");
+      dragState = {selection:true,desk};
+      e.preventDefault();
+    }
+  });
+
+  document.addEventListener("pointermove", e=>{
+    // selection
+    if(dragState && dragState.selection){
+      const sel = $("desktopSelection");
+      const desk = dragState.desk;
+      let x1 = e.clientX - desk.left;
+      let y1 = e.clientY - desk.top;
+      let x0 = +sel.dataset.x0;
+      let y0 = +sel.dataset.y0;
+      const left = Math.min(x0,x1);
+      const top  = Math.min(y0,y1);
+      const w = Math.abs(x1-x0);
+      const h = Math.abs(y1-y0);
+      sel.style.left = left+"px";
+      sel.style.top  = top+"px";
+      sel.style.width= w+"px";
+      sel.style.height=h+"px";
+      return;
+    }
+
+    // resize
+    if(resizeState){
+      e.preventDefault();
+      const ds = resizeState;
+      const dx = e.clientX - ds.startX;
+      const dy = e.clientY - ds.startY;
+      let left = ds.startLeft;
+      let top  = ds.startTop;
+      let w = ds.startW;
+      let h = ds.startH;
+      const minW = 260, minH = 160;
+      if(ds.mode==="br"){
+        w = ds.startW + dx;
+        h = ds.startH + dy;
+      }else if(ds.mode==="right"){
+        w = ds.startW + dx;
+      }else if(ds.mode==="left"){
+        w = ds.startW - dx;
+        left = ds.startLeft + dx;
+      }else if(ds.mode==="bottom"){
+        h = ds.startH + dy;
+      }else if(ds.mode==="top"){
+        h = ds.startH - dy;
+        top = ds.startTop + dy;
+      }
+      const maxW = ds.deskW - 40;
+      const maxH = ds.deskH - 60;
+      if(w < minW){ left += w-minW; w=minW;}
+      if(h < minH){ top  += h-minH; h=minH;}
+      if(w > maxW) w = maxW;
+      if(h > maxH) h = maxH;
+
+      // snap to grid 20
+      left = Math.round(left/20)*20;
+      top  = Math.round(top/20)*20;
+      w    = Math.round(w/20)*20;
+      h    = Math.round(h/20)*20;
+
+      ds.win.style.left = left+"px";
+      ds.win.style.top  = top+"px";
+      ds.win.style.width= w+"px";
+      ds.win.style.height=h+"px";
+      return;
+    }
+
+    // drag window
+    if(dragState && !dragState.selection){
+      e.preventDefault();
+      const ds = dragState;
+      const dx = e.clientX - ds.startX;
+      const dy = e.clientY - ds.startY;
+      let x = ds.offsetX + dx;
+      let y = ds.offsetY + dy;
+      const maxX = ds.deskW - 140;
+      const maxY = ds.deskH - 90;
+      if(x<0) x=0;
+      if(y<0) y=0;
+      if(x>maxX) x=maxX;
+      if(y>maxY) y=maxY;
+      x = Math.round(x/20)*20;
+      y = Math.round(y/20)*20;
+      ds.win.style.left = x+"px";
+      ds.win.style.top  = y+"px";
+    }
+  });
+
+  document.addEventListener("pointerup", ()=>{
+    if(dragState && dragState.selection){
+      $("desktopSelection").classList.add("hidden");
+    }else if(dragState || resizeState){
+      saveLayout();
+    }
+    dragState=null;
+    resizeState=null;
+  });
+
+  // TASKBAR & Start
+  document.addEventListener("click", e=>{
+    const appBtn = e.target.closest("[data-open-app]");
+    if(appBtn){
+      const app = appBtn.dataset.openApp;
+      showWindow(app);
+    }
+    const folderBtn = e.target.closest("[data-open-folder]");
+    if(folderBtn){
+      const f = folderBtn.dataset.openFolder;
+      if(f==="indexes"){
+        ["index-ton-sol","index-ton-btc"].forEach(a=>showWindow(a,false));
+      }else if(f==="prices"){
+        ["price-ton","price-btc"].forEach(a=>showWindow(a,false));
+      }
+    }
+
+    const btn = e.target.closest(".win-btn");
+    if(btn){
+      const win = btn.closest(".window");
+      if(!win) return;
+      const app = win.dataset.app;
+      if(btn.classList.contains("win-min")){
+        minimizeWindow(win);
+      }else if(btn.classList.contains("win-max")){
+        win.classList.toggle("maximized");
+      }else if(btn.classList.contains("win-close")){
+        minimizeWindow(win);
+      }
+      saveLayout();
+      if(app) setTaskActive(app);
+    }
+  });
+
+  // doubleclick titlebar -> maximize
+  document.addEventListener("dblclick", e=>{
+    const bar = e.target.closest(".window-titlebar");
+    if(bar){
+      const win = bar.closest(".window");
+      if(!win) return;
+      win.classList.toggle("maximized");
+      saveLayout();
+    }
+  });
+
+  $("btnStart").addEventListener("click", ()=>{
+    $("startMenu").classList.toggle("show");
+  });
+  document.addEventListener("click", e=>{
+    if(!e.target.closest("#btnStart") && !e.target.closest("#startMenu")){
+      $("startMenu").classList.remove("show");
+    }
+  });
+
+  // SETTINGS
+  function updateSettingsUI(){
+    qsa('.settings-chip[data-setting="lang"]').forEach(b=>{
+      b.classList.toggle("active", b.dataset.value===Settings.lang);
+    });
+    qsa('.settings-chip[data-setting="decimals"]').forEach(b=>{
+      b.classList.toggle("active", +b.dataset.value===Settings.decimals);
+    });
+    $("chkThousands").checked = Settings.thousand;
+    $("chkAnimations").checked = Settings.animations;
+    document.body.classList.toggle("no-anim", !Settings.animations);
+    qsa('.settings-chip[data-setting="live"]').forEach(b=>{
+      b.classList.toggle("active", +b.dataset.value===Settings.liveInterval);
+    });
+    qsa('.settings-chip[data-setting="theme"]').forEach(b=>{
+      b.classList.toggle("active", b.dataset.value===Settings.theme);
+    });
+  }
+
+  // API + Charts
+  const API_BASE = "https://api.mexc.com/api/v3";
+  const PROXIES = [
+    u=>`https://cors.isomorphic-git.org/${u}`,
+    u=>`https://corsproxy.io/?${encodeURIComponent(u)}`,
+    u=>`https://r.jina.ai/http/${u.replace(/^https?:\/\//,'')}`
+  ];
+  const SYMBOLS = {
+    TON:"TONUSDT",
+    BTC:"BTCUSDT",
+    ETH:"ETHUSDT",
+    SOL:"SOLUSDT"
+  };
+
+  const INDEX_APPS = [
+    {app:"index-ton-sol", base:"TON", other:"SOL"},
+    {app:"index-ton-btc", base:"TON", other:"BTC"}
+  ];
+  const PRICE_APPS = [
+    {app:"price-ton", asset:"TON"},
+    {app:"price-btc", asset:"BTC"}
+  ];
+
+  const USED_ASSETS = new Set();
+  INDEX_APPS.forEach(a=>{USED_ASSETS.add(a.base);USED_ASSETS.add(a.other);});
+  PRICE_APPS.forEach(a=>USED_ASSETS.add(a.asset));
+  USED_ASSETS.add("ETH");USED_ASSETS.add("SOL");
+
+  const TF_CONFIG = {
+    "1m": { interval:"1m", limit:500 },
+    "5m": { interval:"5m", limit:500 },
+    "15m":{ interval:"15m",limit:500 },
+    "3M": { interval:"4h",limit:500 }
+  };
+  let CURRENT_TF = "1m";
+  let CHART_TYPE = "candles";
+  let APP_READY = false;
+  let liveTimer = null;
+  let lastLiveTs = 0;
+  let liveWarned = false;
+
+  const HISTORY = {};
+  const LIVE_PRICE = {};
+  const IndexCharts = {};
+  const PriceCharts = {};
+  const ChartMeta = {}; // per app
+
+  function apiUrl(q){return `${API_BASE}/${q}`;}
+
+  async function fetchWithTimeout(url, ms=5000){
+    const ctrl = new AbortController();
+    const t = setTimeout(()=>ctrl.abort(), ms);
+    try{
+      const res = await fetch(url,{cache:"no-store", signal:ctrl.signal});
+      return res;
+    }finally{clearTimeout(t);}
+  }
+
+  async function viaProxies(url,tries=2){
+    let lastErr;
+    for(let round=0; round<tries; round++){
+      for(const build of PROXIES){
+        const proxied = build(url);
+        try{
+          const r = await fetchWithTimeout(proxied, 5000);
+          if(!r.ok) throw new Error(`HTTP ${r.status}`);
+          const text = await r.text();
+          let data;
+          try{ data = JSON.parse(text); }
+          catch{ data = JSON.parse(text.replace(/^[^{\[]+/,'')); }
+          return data;
+        }catch(e){
+          lastErr = e;
+          await new Promise(res=>setTimeout(res,220*(round+1)));
+        }
+      }
+    }
+    throw lastErr || new Error("All proxies failed");
+  }
+  const mexcJSON = path => viaProxies(apiUrl(path),2);
+
+  async function klines(assetName){
+    const sym = SYMBOLS[assetName];
+    const cfg = TF_CONFIG[CURRENT_TF] || TF_CONFIG["1m"];
+    const j = await mexcJSON(`klines?symbol=${sym}&interval=${cfg.interval}&limit=${cfg.limit}`);
+    return j.map(a=>({
+      time:Math.floor(a[0]/1000),
+      open:+a[1],high:+a[2],low:+a[3],close:+a[4],value:+a[4]
+    }));
+  }
+  async function bookMid(assetName){
+    const sym = SYMBOLS[assetName];
+    const j = await mexcJSON(`ticker/bookTicker?symbol=${sym}`);
+    const bid=+j.bidPrice, ask=+j.askPrice;
+    return (bid+ask)/2;
+  }
+
+  function themeChartOpts(showGrid=true, showCross=true){
+    const cs = getComputedStyle(document.documentElement);
+    const gridColor = cs.getPropertyValue("--grid").trim();
+    const txt = cs.getPropertyValue("--text").trim();
+    const chBg = cs.getPropertyValue("--chart").trim();
+    return {
+      layout:{
+        background:{type:"solid",color:chBg},
+        textColor:txt
+      },
+      rightPriceScale:{borderColor:gridColor},
+      timeScale:{borderColor:gridColor,timeVisible:true,secondsVisible:false,rightOffset:6,barSpacing:8},
+      grid:{
+        vertLines:{color:showGrid?gridColor:"transparent"},
+        horzLines:{color:showGrid?gridColor:"transparent"}
+      },
+      crosshair:{mode:showCross?LightweightCharts.CrosshairMode.Magnet:LightweightCharts.CrosshairMode.Hidden},
+      handleScale:{mouseWheel:true,pinch:true,axisPressedMouseMove:true},
+      kineticScroll:{mouse:true,touch:true}
+    };
+  }
+
+  function createChart(container, appKey, kind){
+    const opts = themeChartOpts(true,true);
+    const c = LightweightCharts.createChart(container, opts);
+    const ro = new ResizeObserver(()=>c.resize(container.clientWidth||600,container.clientHeight||260));
+    ro.observe(container);
+    ChartMeta[appKey] = {kind, showGrid:true, showCross:true};
+    return c;
+  }
+
+  function computeIndexHistory(base,other){
+    const b = HISTORY[base]||[];
+    const o = HISTORY[other]||[];
+    const map = new Map(o.map(c=>[c.time,c.value]));
+    return b.filter(c=>map.has(c.time))
+            .map(c=>({time:c.time,value:(c.value/map.get(c.time))*100}));
+  }
+
+  function ensureIndexChart(appKey){
+    if(!IndexCharts[appKey]){
+      const cont = document.querySelector(`.chart[data-app-chart="${appKey}"]`);
+      if(!cont) return;
+      const chart = createChart(cont, appKey, "index");
+      const series = chart.addLineSeries({lineWidth:2});
+      IndexCharts[appKey] = {chart,series};
+      chart.subscribeCrosshairMove(param=>{
+        const box = document.querySelector(`.chart-info[data-app-info="${appKey}"]`);
+        if(!box) return;
+        if(!param.time || !param.seriesPrices.size){
+          box.textContent="—";
+          return;
+        }
+        const time = param.time;
+        const val = param.seriesPrices.get(series);
+        const d = new Date(time*1000);
+        box.innerHTML = `Time: <b>${d.toISOString().replace('T',' ').slice(0,19)}</b><br>Index: <b>${fmt(val)}</b>`;
+      });
+    }
+    const cfg = INDEX_APPS.find(a=>a.app===appKey);
+    if(!cfg) return;
+    const data = computeIndexHistory(cfg.base,cfg.other);
+    IndexCharts[appKey].series.setData(data);
+    IndexCharts[appKey].chart.timeScale().fitContent();
+  }
+
+  function ensurePriceChart(appKey){
+    const cont = document.querySelector(`.chart[data-app-chart="${appKey}"]`);
+    if(!cont) return;
+    if(!PriceCharts[appKey]){
+      const chart = createChart(cont, appKey, "price");
+      PriceCharts[appKey] = {chart,series:null};
+      chart.subscribeCrosshairMove(param=>{
+        const box = document.querySelector(`.chart-info[data-app-info="${appKey}"]`);
+        if(!box) return;
+        if(!param.time || !param.seriesPrices.size){
+          box.textContent="—";
+          return;
+        }
+        const series = PriceCharts[appKey].series;
+        if(!series) return;
+        const price = param.seriesPrices.get(series);
+        const d = new Date(param.time*1000);
+        box.innerHTML = `Time: <b>${d.toISOString().replace('T',' ').slice(0,19)}</b><br>Price: <b>${fmt(price)}</b>`;
+      });
+    }
+    const obj = PriceCharts[appKey];
+    if(obj.series){ obj.chart.removeSeries(obj.series); obj.series=null; }
+    const cfg = PRICE_APPS.find(a=>a.app===appKey);
+    if(!cfg) return;
+    if(CHART_TYPE==="candles"){
+      const s = obj.chart.addCandlestickSeries({
+        upColor:"#00ff7a",downColor:"#ff4b4b",
+        wickUpColor:"#00ff7a",wickDownColor:"#ff4b4b",
+        borderVisible:false
+      });
+      obj.series = s;
+      obj.series.setData(HISTORY[cfg.asset]||[]);
+    }else{
+      const s = obj.chart.addLineSeries({lineWidth:2});
+      obj.series = s;
+      obj.series.setData(HISTORY[cfg.asset]||[]);
+    }
+    obj.chart.timeScale().fitContent();
+  }
+
+  function updateAllOpenChartsFromHistory(){
+    INDEX_APPS.forEach(cfg=>{
+      if(IndexCharts[cfg.app]){
+        const data = computeIndexHistory(cfg.base,cfg.other);
+        IndexCharts[cfg.app].series.setData(data);
+        IndexCharts[cfg.app].chart.timeScale().fitContent();
+      }
+    });
+    PRICE_APPS.forEach(cfg=>{
+      if(PriceCharts[cfg.app]){
+        const obj = PriceCharts[cfg.app];
+        obj.series.setData(HISTORY[cfg.asset]||[]);
+        obj.chart.timeScale().fitContent();
+      }
+    });
+  }
+
+  async function loadHistoryAll(){
+    const names = [...USED_ASSETS];
+    for(const name of names){
+      try{
+        HISTORY[name] = await klines(name);
+      }catch(e){
+        console.error("History error", name, e);
+        HISTORY[name] = [];
+      }
+    }
+  }
+
+  function setLiveStatus(globalState){
+    const t = I18N[Settings.lang] || I18N.ru;
+    const led = $("liveLed");
+    if(globalState==="ok"){
+      $("liveStatusText").textContent = `${t.liveOnline}: ${CURRENT_TF}`;
+      led.classList.remove("warn","err");
+    }else if(globalState==="warn"){
+      $("liveStatusText").textContent = `${t.liveOnline} (lag)`;
+      led.classList.remove("err");
+      led.classList.add("warn");
+    }else{
+      $("liveStatusText").textContent = `${t.liveOffline} (proxy)`;
+      led.classList.remove("warn");
+      led.classList.add("err");
+    }
+
+    // мини-статус в каждом окне
+    qsa(".window").forEach(w=>{
+      const txt = w.querySelector("[data-mini-text]");
+      const ledMini = w.querySelector("[data-mini-led]");
+      if(!txt || !ledMini) return;
+      if(w.dataset.app==="settings" || w.dataset.app==="tips"){
+        txt.textContent = w.dataset.app==="tips" ? "Alt+H" : "Profile & layout";
+        ledMini.className = "mini-led";
+        return;
+      }
+      txt.textContent = `${CURRENT_TF} · ${CHART_TYPE} · Live ${Math.round(Settings.liveInterval/1000)}s`;
+      ledMini.className = "mini-led";
+      if(globalState==="ok"){}
+      else if(globalState==="warn") ledMini.classList.add("warn");
+      else ledMini.classList.add("err");
+    });
+  }
+
+  function updateWindowStatusLines(source){
+    const stamp = timeStr();
+    qsa(".window").forEach(w=>{
+      const l = w.querySelector("[data-status-left]");
+      const r = w.querySelector("[data-status-right]");
+      if(!l || !r) return;
+      if(w.dataset.app==="settings"){
+        return;
+      }
+      l.textContent = "Last update: "+stamp;
+      r.textContent = "Source: "+source;
+    });
+  }
+
+  async function liveTickOnce(){
+    try{
+      const names = [...USED_ASSETS];
+      const mids = await Promise.all(names.map(name=>bookMid(name)));
+      names.forEach((name,i)=>{LIVE_PRICE[name]=mids[i];});
+
+      lastLiveTs = Date.now();
+      if(liveWarned){
+        toast(Settings.lang==="ru"
+          ? "Соединение с MEXC восстановлено"
+          : "MEXC live connection restored");
+        liveWarned=false;
+      }
+      setLiveStatus("ok");
+      updateWindowStatusLines("MEXC via proxy");
+
+      const ton = LIVE_PRICE["TON"];
+      const btc = LIVE_PRICE["BTC"];
+      const eth = LIVE_PRICE["ETH"];
+      const sol = LIVE_PRICE["SOL"];
+
+      const setText = (app,role,val)=>{
+        const el = document.querySelector(`[data-app="${app}"][data-role="${role}"]`);
+        if(el) el.textContent = fmt(val);
+      };
+      if(ton!=null) setText("overview","ton-usdt",ton);
+      if(btc!=null) setText("overview","btc-usdt",btc);
+      if(eth!=null) setText("overview","eth-usdt",eth);
+      if(sol!=null) setText("overview","sol-usdt",sol);
+
+      INDEX_APPS.forEach(cfg=>{
+        const base = LIVE_PRICE[cfg.base];
+        const other = LIVE_PRICE[cfg.other];
+        if(!base || !other) return;
+        const idx = base/other*100;
+        const ratio = base/other;
+        const app = cfg.app;
+
+        const elIdx   = document.querySelector(`[data-app="${app}"][data-role="index-value"]`);
+        const elRatio = document.querySelector(`[data-app="${app}"][data-role="ratio"]`);
+        const elBase  = document.querySelector(`[data-app="${app}"][data-role="base-price"]`);
+        const elOther = document.querySelector(`[data-app="${app}"][data-role="other-price"]`);
+        if(elIdx) elIdx.textContent = fmt(idx);
+        if(elRatio) elRatio.textContent = fmt(ratio);
+        if(elBase) elBase.textContent = fmt(base);
+        if(elOther) elOther.textContent = fmt(other);
+
+        if(app==="index-ton-sol"){
+          const o = document.querySelector(`[data-app="overview"][data-role="idx-ton-sol"]`);
+          if(o) o.textContent = fmt(idx);
+        }
+        if(app==="index-ton-btc"){
+          const o = document.querySelector(`[data-app="overview"][data-role="idx-ton-btc"]`);
+          if(o) o.textContent = fmt(idx);
+        }
+
+        if(IndexCharts[app]){
+          IndexCharts[app].series.update({time:Math.floor(Date.now()/1000),value:idx});
+        }
+      });
+
+      PRICE_APPS.forEach(cfg=>{
+        const p = LIVE_PRICE[cfg.asset];
+        if(!p) return;
+        const usdtPerAsset = p;
+        const assetPerUsdt = 1/p;
+        const app = cfg.app;
+        const elAsset = document.querySelector(`[data-app="${app}"][data-role="asset-usdt"]`);
+        const elUsdt  = document.querySelector(`[data-app="${app}"][data-role="usdt-asset"]`);
+        if(elAsset) elAsset.textContent = fmt(usdtPerAsset);
+        if(elUsdt)  elUsdt.textContent  = fmt(assetPerUsdt);
+
+        const obj = PriceCharts[app];
+        if(obj && obj.series){
+          const t = Math.floor(Date.now()/1000);
+          if(CHART_TYPE==="candles"){
+            obj.series.update({time:t,open:p,high:p,low:p,close:p});
+          }else{
+            obj.series.update({time:t,value:p});
+          }
+        }
+      });
+    }catch(e){
+      console.error("liveTick error",e);
+      setLiveStatus("warn");
+      updateWindowStatusLines("Local cache / proxy issue");
+    }
+  }
+
+  function startLive(){
+    if(liveTimer) clearInterval(liveTimer);
+    liveTimer = setInterval(liveTickOnce, Settings.liveInterval);
+  }
+
+  function setAppReady(ready){
+    APP_READY = ready;
+    const loader = $("loader");
+    if(!loader) return;
+    if(ready){
+      loader.classList.add("hidden");
+    }else{
+      loader.classList.remove("hidden");
+    }
+  }
+
+  function guardReady(){
+    if(!APP_READY){
+      toast(Settings.lang==="ru"
+        ? "Ещё загружаю историю и подключаюсь к MEXC"
+        : "Still loading history / connecting to MEXC");
+      return false;
+    }
+    return true;
+  }
+
+  function applyZoomPreset(appKey, preset){
+    const meta = ChartMeta[appKey];
+    if(!meta) return;
+    const chartObj = IndexCharts[appKey] || PriceCharts[appKey];
+    if(!chartObj) return;
+    const chart = chartObj.chart;
+    const series = chartObj.series;
+    if(!series) return;
+
+    chart.timeScale().fitContent();
+    if(preset==="reset") return;
+
+    const data = series._series && series._series._data ? [] : [];
+    // упрощённо — просто увеличим "zoom" по пресетам
+    const ts = chart.timeScale();
+    const range = ts.getVisibleLogicalRange();
+    if(!range) return;
+    const width = range.to - range.from;
+    let factor = 1;
+    if(preset==="1D") factor = 0.2;
+    else if(preset==="1W") factor = 0.4;
+    else if(preset==="1M") factor = 0.7;
+    else if(preset==="3M") factor = 1.0;
+    const newFrom = range.to - width*factor;
+    ts.setVisibleLogicalRange({from:newFrom,to:range.to});
+  }
+
+  // LIVE watchdog
+  setInterval(()=>{
+    if(!APP_READY || !lastLiveTs) return;
+    const diff = Date.now()-lastLiveTs;
+    if(diff>30000 && !liveWarned){
+      toast(Settings.lang==="ru"
+        ? "Live задерживается, проверяю прокси…"
+        : "Live is lagging, checking proxies…", 2600);
+      setLiveStatus("warn");
+      liveWarned=true;
+    }
+  },4000);
+
+  // HOTKEYS
+  document.addEventListener("keydown", e=>{
+    if(!e.altKey) return;
+    const code = e.code;
+    if(code==="Digit1"){ showWindow("overview"); e.preventDefault();}
+    else if(code==="Digit2"){ showWindow("index-ton-sol"); e.preventDefault();}
+    else if(code==="Digit3"){ showWindow("index-ton-btc"); e.preventDefault();}
+    else if(code==="Digit4"){ showWindow("price-ton"); e.preventDefault();}
+    else if(code==="Digit5"){ showWindow("price-btc"); e.preventDefault();}
+    else if(code==="KeyS"){ showWindow("settings"); e.preventDefault();}
+    else if(code==="KeyH"){ showWindow("tips"); e.preventDefault();}
+  });
+
+  // CONTEXT MENU
+  let ctxTargetApp = null;
+  $("desktopArea").addEventListener("contextmenu", e=>{
+    const win = e.target.closest(".window");
+    if(!win){
+      $("winContext").classList.remove("show");
+      return;
+    }
+    e.preventDefault();
+    ctxTargetApp = win.dataset.app;
+    const menu = $("winContext");
+    menu.style.left = e.clientX+"px";
+    menu.style.top  = e.clientY+"px";
+    menu.classList.add("show");
+  });
+  document.addEventListener("click", e=>{
+    if(!e.target.closest("#winContext")){
+      $("winContext").classList.remove("show");
+    }
+  });
+  $("winContext").addEventListener("click", e=>{
+    const item = e.target.closest(".ctx-item");
+    if(!item || !ctxTargetApp) return;
+    const win = document.querySelector(`.window[data-app="${ctxTargetApp}"]`);
+    if(!win) return;
+    const desk = $("desktopArea").getBoundingClientRect();
+    const rect = win.getBoundingClientRect();
+    const cmd = item.dataset.ctx;
+    if(cmd==="pin"){
+      const pinned = win.dataset.pinned==="true";
+      if(pinned){
+        win.dataset.pinned="false";
+        pinnedApps.delete(ctxTargetApp);
+      }else{
+        win.dataset.pinned="true";
+        pinnedApps.add(ctxTargetApp);
+        bringToFront(win);
+      }
+    }else if(cmd==="snap-left"){
+      win.classList.remove("maximized");
+      win.style.left="10px";
+      win.style.top="40px";
+      win.style.width=Math.round(desk.width/2-20)+"px";
+      win.style.height=Math.round(desk.height-70)+"px";
+    }else if(cmd==="snap-right"){
+      win.classList.remove("maximized");
+      win.style.left=Math.round(desk.width/2+5)+"px";
+      win.style.top="40px";
+      win.style.width=Math.round(desk.width/2-20)+"px";
+      win.style.height=Math.round(desk.height-70)+"px";
+    }else if(cmd==="snap-center"){
+      win.classList.remove("maximized");
+      const w=420,h=260;
+      win.style.width=w+"px";
+      win.style.height=h+"px";
+      win.style.left=Math.round(desk.width/2-w/2)+"px";
+      win.style.top=Math.round(desk.height/2-h/2)+"px";
+    }else if(cmd==="lock"){
+      win.classList.toggle("locked");
+    }
+    saveLayout();
+    $("winContext").classList.remove("show");
+  });
+
+  // TIPS slides
+  let currentTip = 1;
+  function showTipSlide(i){
+    currentTip=i;
+    qsa("[data-tip-slide]").forEach(s=>{
+      s.classList.toggle("active", +s.dataset.tipSlide===i);
+    });
+  }
+  $("btnTipPrev").addEventListener("click", ()=>{
+    currentTip = currentTip===1 ? 3 : currentTip-1;
+    showTipSlide(currentTip);
+  });
+  $("btnTipNext").addEventListener("click", ()=>{
+    currentTip = currentTip===3 ? 1 : currentTip+1;
+    showTipSlide(currentTip);
+  });
+
+  // INIT
+  window.addEventListener("DOMContentLoaded", async ()=>{
+    loadSettings();
+    applyLanguage();
+    updateSettingsUI();
+
+    const t = I18N[Settings.lang] || I18N.ru;
+    $("liveStatusText").textContent = t.liveConnecting;
+    $("tfInfo").textContent = `${t.tfInfoPrefix}: ${CURRENT_TF} • 3M history mode`;
+    if(!Settings.animations) document.body.classList.add("no-anim");
+
+    if(!window.LightweightCharts || typeof LightweightCharts.createChart!=="function"){
+      toast("Не загрузилась библиотека графиков");
+      setAppReady(true);
+      $("liveStatusText").textContent = I18N[Settings.lang].liveOffline+" (chart lib)";
+      $("liveLed").classList.add("err");
+      return;
+    }
+
+    qsa(".window").forEach((w,i)=>{w.style.zIndex = 40+i;w.classList.add("shown");});
+    loadLayout();
+
+    // layout buttons
+    $("win-settings").addEventListener("click", e=>{
+      const chip = e.target.closest(".settings-chip");
+      if(chip && chip.dataset.layoutPreset){
+        applyPresetLayout(chip.dataset.layoutPreset);
+      }
+    });
+
+    // save/reset
+    $("btnSaveLayout").addEventListener("click", saveLayout);
+    $("btnResetLayout").addEventListener("click", resetLayout);
+
+    // settings interactions
+    $("win-settings").addEventListener("click", e=>{
+      const chip = e.target.closest(".settings-chip");
+      if(chip && chip.dataset.setting){
+        const type = chip.dataset.setting;
+        const val  = chip.dataset.value;
+        if(type==="lang"){
+          Settings.lang = val;
+          saveSettings();
+          applyLanguage();
+          updateSettingsUI();
+        }else if(type==="decimals"){
+          Settings.decimals = +val;
+          saveSettings();
+          updateSettingsUI();
+        }else if(type==="live"){
+          Settings.liveInterval = +val;
+          saveSettings();
+          updateSettingsUI();
+          if(APP_READY) startLive();
+        }else if(type==="theme"){
+          Settings.theme = val;
+          saveSettings();
+          updateSettingsUI();
+        }
+      }
+    });
+    $("chkThousands").addEventListener("change", e=>{
+      Settings.thousand = e.target.checked;
+      saveSettings();
+      updateSettingsUI();
+    });
+    $("chkAnimations").addEventListener("change", e=>{
+      Settings.animations = e.target.checked;
+      saveSettings();
+      updateSettingsUI();
+    });
+
+    // Chart toolbar click (TF / type)
+    document.addEventListener("click", async e=>{
+      const chip = e.target.closest(".chart-chip");
+      if(!chip) return;
+      if(!guardReady()) return;
+      const tf = chip.dataset.tf;
+      const tp = chip.dataset.type;
+      let needReload = false;
+      if(tf && tf!==CURRENT_TF){
+        CURRENT_TF = tf;
+        const tloc = I18N[Settings.lang] || I18N.ru;
+        $("tfInfo").textContent = `${tloc.tfInfoPrefix}: ${CURRENT_TF} • 3M history mode`;
+        needReload = true;
+      }
+      if(tp && tp!==CHART_TYPE){
+        CHART_TYPE = tp;
+        needReload = true;
+      }
+      qsa('.chart-chip[data-tf]').forEach(b=>b.classList.toggle("active", b.dataset.tf===CURRENT_TF));
+      qsa('.chart-chip[data-type]').forEach(b=>b.classList.toggle("active", b.dataset.type===CHART_TYPE));
+      setLiveStatus("ok");
+      if(needReload){
+        toast(Settings.lang==="ru"
+          ? `Обновляю графики: ${CURRENT_TF}, ${CHART_TYPE}`
+          : `Reloading charts: ${CURRENT_TF}, ${CHART_TYPE}`);
+        try{
+          await loadHistoryAll();
+          updateAllOpenChartsFromHistory();
+        }catch(err){
+          console.error("reload error",err);
+          toast(Settings.lang==="ru"
+            ? "Ошибка обновления истории"
+            : "Error updating history");
+        }
+      }
+    });
+
+    // Zoom panel
+    document.addEventListener("click", e=>{
+      const btn = e.target.closest(".zoom-btn");
+      if(btn){
+        const preset = btn.dataset.zoom;
+        const shell = btn.closest(".chart-shell");
+        const chartEl = shell.querySelector(".chart");
+        const appKey = chartEl.dataset.appChart;
+        applyZoomPreset(appKey, preset==="reset"?"reset":preset);
+      }
+    });
+    document.addEventListener("change", e=>{
+      if(e.target.matches("[data-zoom-cross]") || e.target.matches("[data-zoom-grid]")){
+        const shell = e.target.closest(".chart-shell");
+        const chartEl = shell.querySelector(".chart");
+        const appKey = chartEl.dataset.appChart;
+        const meta = ChartMeta[appKey];
+        if(!meta) return;
+        if(e.target.matches("[data-zoom-cross]")) meta.showCross = e.target.checked;
+        if(e.target.matches("[data-zoom-grid]")) meta.showGrid = e.target.checked;
+        const chartObj = IndexCharts[appKey] || PriceCharts[appKey];
+        if(chartObj){
+          chartObj.chart.applyOptions(themeChartOpts(meta.showGrid, meta.showCross));
+        }
+      }
+    });
+
+    // TF-info click: cycle TF
+    $("tfInfo").addEventListener("click", async ()=>{
+      if(!guardReady()) return;
+      const order = ["1m","5m","15m","3M"];
+      const idx = order.indexOf(CURRENT_TF);
+      const next = order[(idx+1)%order.length];
+      CURRENT_TF = next;
+      const tloc = I18N[Settings.lang] || I18N.ru;
+      $("tfInfo").textContent = `${tloc.tfInfoPrefix}: ${CURRENT_TF} • 3M history mode`;
+      toast(Settings.lang==="ru"
+        ? "Переключил таймфрейм на "+CURRENT_TF
+        : "Switched timeframe to "+CURRENT_TF);
+      try{
+        await loadHistoryAll();
+        updateAllOpenChartsFromHistory();
+      }catch(e){
+        console.error("TF change error",e);
+        toast(Settings.lang==="ru"
+          ? "Не удалось обновить историю для нового TF"
+          : "Failed to update history for TF");
+      }
+    });
+
+    // compact mode авто на мобилке
+    if(window.innerWidth<700){
+      document.body.classList.add("compact");
+    }
+    $("desktopArea").addEventListener("dblclick",()=>{
+      document.body.classList.toggle("compact");
+      toast(document.body.classList.contains("compact")
+        ? (Settings.lang==="ru" ? "Компактный режим" : "Compact mode")
+        : (Settings.lang==="ru" ? "Полный режим графиков" : "Full chart mode"));
+    });
+
+    // Loader timeout
+    const loaderTimeout = setTimeout(()=>{
+      if(!APP_READY){
+        setAppReady(true);
+        $("liveStatusText").textContent = (I18N[Settings.lang]||I18N.ru).liveOffline+" (timeout)";
+        $("liveLed").classList.add("warn");
+        toast(Settings.lang==="ru"
+          ? "Не смог подключиться к MEXC. Интерфейс всё равно доступен."
+          : "Could not connect to MEXC. UI is still available.");
+      }
+    },8000);
+
+    try{
+      await loadHistoryAll();
+      ensureIndexChart("index-ton-sol");
+      ensureIndexChart("index-ton-btc");
+      ensurePriceChart("price-ton");
+      ensurePriceChart("price-btc");
+      await liveTickOnce();
+      clearTimeout(loaderTimeout);
+      setAppReady(true);
+      startLive();
+    }catch(e){
+      console.error(e);
+      clearTimeout(loaderTimeout);
+      setAppReady(true);
+      setLiveStatus("err");
+      toast(Settings.lang==="ru"
+        ? "Ошибка при инициализации (прокси MEXC недоступны)"
+        : "Initialization error (MEXC proxies unavailable)");
+    }
+
+    // Активные TF/type чипы
+    qsa('.chart-chip[data-tf]').forEach(b=>b.classList.toggle("active", b.dataset.tf===CURRENT_TF));
+    qsa('.chart-chip[data-type]').forEach(b=>b.classList.toggle("active", b.dataset.type===CHART_TYPE));
+    setLiveStatus("ok");
+
+    // first-run tips
+    if(!localStorage.getItem(TIPS_KEY)){
+      showWindow("tips");
+      localStorage.setItem(TIPS_KEY,"1");
+    }
+  });
+</script>
+</body>
+</html>
